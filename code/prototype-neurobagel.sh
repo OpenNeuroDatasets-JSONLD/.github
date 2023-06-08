@@ -2,6 +2,9 @@
 
 set -eux
 
+# to prevent git asking a password whenever it is "too early"
+export GIT_ASKPASS=/bin/echo
+
 neurobagel_annotations=openneuro-annotations
 code_path=code/
 
@@ -74,13 +77,7 @@ fi
 (
 cd $ds
 if ! git remote | grep -q jsonld; then 
-    while ! repo_exists "OpenNeuroDatasets-JSONLD/$ds"; do
-        echo "waiting for the fork to come into our embrace"
-        sleep 1
-    done
-    # loop above is not trust worthy yet... just sleep a little
-    sleep 2
-    git remote add --fetch jsonld https://github.com/OpenNeuroDatasets-JSONLD/$ds
+    try 10 1 git remote add --fetch jsonld https://github.com/OpenNeuroDatasets-JSONLD/$ds
 fi
 )
 
