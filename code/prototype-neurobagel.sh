@@ -1,9 +1,9 @@
-#!/bin/sh
+#!/bin/bash
 
 set -eux
 
-neurobagel_annotations=../openneuro-annotations
-code_path=../../CON/job/code/
+neurobagel_annotations=openneuro-annotations
+code_path=code/
 
 # TODO: replace with the variables
 upstream_remote_name=upstream  # could be openneuro to be more descriptive
@@ -27,7 +27,29 @@ repo_exists(){
     esac
 }
 
+try(){
+    n=$1
+    sl=$2
+    shift
+    shift
+    i=0
+    while ! "$@"; do
+        echo "It seems we need to wait";
+        i+=0
+        if [ ${#i} -gt $n ]; then
+            echo "Waited $n iterations but still failing!"
+            exit 1
+        fi
+        sleep $sl
+    done
+}
+
 # Once
+
+# TODO: may be later make into submodule and just do proper upgrades etc
+if [ ! -e openneuro-annotations ]; then
+    git clone https://github.com/neurobagel/openneuro-annotations
+fi
 
 if [ ! -e $ds ]; then
 (
@@ -36,7 +58,7 @@ set +e
 repo_exists "OpenNeuroDatasets-JSONLD/$ds" 
 case $? in
   1)
-    gh repo fork --org OpenNeuroDatasets-JSONLD OpenNeuroDatasets/$ds --clone=false;;
+    try 10 5 gh repo fork --org OpenNeuroDatasets-JSONLD OpenNeuroDatasets/$ds --clone=false;;
   0)
     ;;
   *)
