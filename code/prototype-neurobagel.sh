@@ -6,7 +6,9 @@ set -eux
 export GIT_ASKPASS=/bin/echo
 
 neurobagel_annotations=openneuro-annotations
-code_path=code/
+
+
+code_path=$(readlink -f $0 | xargs dirname)
 
 # TODO: replace with the variables
 upstream_remote_name=upstream  # could be openneuro to be more descriptive
