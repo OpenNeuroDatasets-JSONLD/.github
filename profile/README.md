@@ -8,4 +8,5 @@ DataLad is a free and open source distributed data management system that keeps 
 
 ## Quick Links
 
-- TBD
+- :computer: [con/job](https://github.com/con/job) to automate updating the dataset forks
+- :blue_book: [data dictionary schema](https://www.neurobagel.org/documentation/dictionaries/)
