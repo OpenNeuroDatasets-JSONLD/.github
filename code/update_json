@@ -21,8 +21,11 @@ def update_json(infile, annotated_file):
 
         # figure out original indentation
         indent = 0
+        multiline = False
         with open(infile, 'r', encoding='utf-8') as f:
-            for line in f.readlines():
+            for i, line in enumerate(f.readlines()):
+                if i:
+                    multiline = True
                 if not line.startswith('{'):
                     for s in line:
                         if s != ' ':
@@ -43,7 +46,7 @@ def update_json(infile, annotated_file):
         indent = 4
 
     with open(infile, 'w', encoding='utf-8') as f:
-        json.dump(in_struct, f, **(dict(indent=indent) if indent else {}))
+        json.dump(in_struct, f, **(dict(indent=indent) if (indent or multiline) else {}))
     print(f"Finished writing {infile}")
 
 if __name__ == '__main__':
