@@ -129,8 +129,6 @@ else
     action="Added"
 fi
 
-echo $action "is what I will do and I am in" $(pwd)
-
 # We need to update to the state of the upstream/$branch entirely, and only enhance one file
 git merge -s ours --no-commit upstream/$branch && git read-tree -m -u upstream/$branch
 
