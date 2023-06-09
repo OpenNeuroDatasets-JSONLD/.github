@@ -5,7 +5,7 @@ set -eux
 # to prevent git asking a password whenever it is "too early"
 export GIT_ASKPASS=/bin/echo
 
-neurobagel_annotations=openneuro-annotations
+neurobagel_annotations=../openneuro-annotations
 
 
 code_path=$(readlink -f $0 | xargs dirname)
@@ -121,14 +121,16 @@ fi
 git checkout $branch
 git pull --ff-only jsonld $branch
 
-# We need to update to the state of the upstream/$branch entirely, and only enhance one file
-git merge -s ours --no-commit upstream/$branch && git read-tree -m -u upstream/$branch
+
 # Run our super command
 if [ -e participants.json ]; then
     action="Updated"
 else
     action="Added"
 fi
+
+# We need to update to the state of the upstream/$branch entirely, and only enhance one file
+git merge -s ours --no-commit upstream/$branch && git read-tree -m -u upstream/$branch
 
 $code_path/update_json participants.json $neurobagel_annotations/${ds}.json
 git add .
