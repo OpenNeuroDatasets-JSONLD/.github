@@ -40,6 +40,11 @@ def update_json(infile, annotated_file):
                 raise ValueError(f"File {infile} already has {target} value: {v[target]}")
             if target in ann_struct[k]:
                 v[target] = ann_struct[k][target]
+
+        for k in ann_struct:
+            if k not in in_struct:
+                in_struct[k] = ann_struct[k]
+
     else:
         print(f"No {infile} -- we will produce one from scratch")
         in_struct = ann_struct
