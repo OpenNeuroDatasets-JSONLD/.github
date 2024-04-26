@@ -1,0 +1,41 @@
+# A workflow that looks at all repos in the OpenNeuroDatasets organization
+# and creates a fork for each of them in the OpenNeuroDatasets-JSONLD organization
+# if a fork does not yet exist.
+
+name: Fork Repositories
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Run every day at midnight
+
+jobs:
+  joblist:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Make forks
+        run: |
+          get_repos() {
+            local organization=$1
+            query="{
+              organization(login: \"${organization}\") {
+                repositories {
+                  totalCount
+                }
+              }
+            }"
+            nRepos=$(gh api graphql -f query="$query" | jq -r '.data.organization.repositories.totalCount')
+            gh repo list "${organization}" --limit "$nRepos" --json name --jq '.[].name'
+          }
+          
+          reposON=$(get_repos "OpenNeuroDatasets")
+          reposON_LD=$(get_repos "OpenNeuroDatasets-JSONLD")
+          
+          # Find repositories that do not have a fork yet
+          diff=$(comm -23 <(echo "$reposON" | sort) <(echo "$reposON_LD" | sort))
+          nDiff=$(echo $diff | wc -w)
+          echo "$nDiff repositories do not have a fork yet"
+          
+          for repo in $diff; do
+            echo "Forking $repo"
+            gh repo fork "OpenNeuroDatasets/$repo" --org "OpenNeuroDatasets-JSONLD" --clone=false
+          done
