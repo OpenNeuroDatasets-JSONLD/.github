@@ -6,7 +6,7 @@ name: Fork Repositories
 
 on:
   schedule:
-    - cron: '0 0 * * *' # Run every day at midnight
+    - cron: '0 21 * * *'
 
 jobs:
   joblist:
@@ -18,13 +18,21 @@ jobs:
             local organization=$1
             query="{
               organization(login: \"${organization}\") {
-                repositories {
+                repositories(first: 100, after: null) {
                   totalCount
+                  nodes {
+                    name
+                  }
+                  pageInfo {
+                    endCursor
+                    hasNextPage
+                  }
                 }
               }
             }"
             nRepos=$(gh api graphql -f query="$query" | jq -r '.data.organization.repositories.totalCount')
-            gh repo list "${organization}" --limit "$nRepos" --json name --jq '.[].name'
+            # Return every repository name except .github (because that one is special)
+            gh repo list "${organization}" --limit "$nRepos" --json name --jq '.[].name' | grep -v ".github"
           }
           
           reposON=$(get_repos "OpenNeuroDatasets")
