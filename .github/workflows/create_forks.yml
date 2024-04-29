@@ -31,11 +31,12 @@ jobs:
           reposON_LD=$(get_repos "OpenNeuroDatasets-JSONLD")
           
           # Find repositories that do not have a fork yet
+          # NOTE: This currently doesn't account for repos unique to OpenNeuroDatasets-JSONLD
           diff=$(comm -23 <(echo "$reposON" | sort) <(echo "$reposON_LD" | sort))
           nDiff=$(echo $diff | wc -w)
           echo "$nDiff repositories do not have a fork yet"
           
-          for repo in $diff; do
+          for repo in "$diff"; do
             echo "Forking $repo"
-            gh repo fork "OpenNeuroDatasets/$repo" --org "OpenNeuroDatasets-JSONLD" --clone=false
+            gh repo fork "OpenNeuroDatasets/${repo}" --org "OpenNeuroDatasets-JSONLD" --clone=false
           done
