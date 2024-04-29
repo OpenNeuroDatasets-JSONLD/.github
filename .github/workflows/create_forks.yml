@@ -44,7 +44,9 @@ jobs:
           nDiff=$(echo $diff | wc -w)
           echo "$nDiff repositories do not have a fork yet"
           
-          for repo in "$diff"; do
+          for repo in $diff; do
             echo "Forking $repo"
             gh repo fork "OpenNeuroDatasets/${repo}" --org "OpenNeuroDatasets-JSONLD" --clone=false
+            echo "Going to sleep for 5 seconds so GH rate limiter is not afraid..."
+            sleep 5
           done
