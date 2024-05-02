@@ -13,20 +13,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Make forks
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           get_repos() {
             local organization=$1
             query="{
               organization(login: \"${organization}\") {
-                repositories(first: 100, after: null) {
+                repositories {
                   totalCount
-                  nodes {
-                    name
-                  }
-                  pageInfo {
-                    endCursor
-                    hasNextPage
-                  }
                 }
               }
             }"
