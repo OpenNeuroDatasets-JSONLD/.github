@@ -20,15 +20,8 @@ jobs:
             local organization=$1
             query="{
               organization(login: \"${organization}\") {
-                repositories(first: 100, after: null) {
+                repositories {
                   totalCount
-                  nodes {
-                    name
-                  }
-                  pageInfo {
-                    endCursor
-                    hasNextPage
-                  }
                 }
               }
             }"
