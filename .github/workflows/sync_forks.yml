@@ -53,7 +53,7 @@ jobs:
                 behind_by=$(is_behind $repo)
                 if [ "$behind_by" != "null" ] && [ $behind_by -gt 0 ]; then
                     echo "    Fork $repo is behind by $behind_by commits"
-                    gh repo sync OpenNeuroDatasets-JSONLD/$repo --clone=false
+                    gh repo sync OpenNeuroDatasets-JSONLD/$repo
                 else
                     # echo "Fork $repo is up to date"
                     :
