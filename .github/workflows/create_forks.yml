@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Make forks
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           get_repos() {
             local organization=$1

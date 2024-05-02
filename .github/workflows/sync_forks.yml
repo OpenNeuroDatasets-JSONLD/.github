@@ -1,0 +1,64 @@
+name: Sync Forks
+
+on:
+  schedule:
+    - cron: '21 12,0 * * *'
+  workflow_dispatch:
+
+jobs:
+    joblist:
+        name: Sync Forks
+        runs-on: ubuntu-latest
+        steps:
+        - name: Sync Forks
+          env:
+            GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          run: |
+            nRepos=$(gh api graphql -f query='{
+                organization(login: "OpenNeuroDatasets-JSONLD" ) {
+                    repositories {
+                        totalCount
+                    }
+                }
+            }' | jq -r '.data.organization.repositories.totalCount')
+            # Return every repository name except .github (because that one is special)
+            reposON_LD=$(gh repo list "OpenNeuroDatasets-JSONLD" --limit ${nRepos} --json name --jq '.[].name' | grep -v ".github")
+            
+            is_behind() {
+                local repo=$1
+                response=$(gh api graphql -f query='query GetDefaultBranch($owner: String!, $name: String!) {
+                    repository(name: $name, owner: $owner) {
+                        parent {
+                            parentName: nameWithOwner
+                        }
+                        defaultBranchRef {
+                            branchName: name
+                        }
+                    }
+                }' -f owner="OpenNeuroDatasets-JSONLD" -f name="${repo}")
+            
+                parentRepo=$(echo $response | jq -r '.data.repository.parent.parentName')
+                defaultBranch=$(echo $response | jq -r '.data.repository.defaultBranchRef.branchName')
+            
+                # Compare the two default branches
+                difference=$(gh api repos/${parentRepo}/compare/${defaultBranch}...OpenNeuroDatasets-JSONLD:${defaultBranch} | jq -r '.ahead_by,.behind_by')
+                # ahead means the fork has new commits that the parent repo doesn't yet have
+                ahead_by=$(echo $difference | cut -d ' ' -f 1)
+                # behind means the fork is missing new commits from the parent repo
+                behind_by=$(echo $difference | cut -d ' ' -f 2)
+                echo ${behind_by}
+            }
+
+            
+            for repo in $reposON_LD; do
+                echo "Checking $repo"
+                behind_by=$(is_behind $repo)
+                if [ "$behind_by" != "null" ] && [ $behind_by -gt 0 ]; then
+                    echo "    Fork $repo is behind by $behind_by commits"
+                    # gh repo sync OpenNeuroDatasets-JSONLD/$repo
+                else
+                    # echo "Fork $repo is up to date"
+                    :
+                fi
+            done
+
