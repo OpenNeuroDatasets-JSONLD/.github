@@ -14,7 +14,7 @@ jobs:
     steps:
       - name: Make forks
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           get_repos() {
             local organization=$1

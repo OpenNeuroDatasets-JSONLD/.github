@@ -12,7 +12,7 @@ jobs:
         steps:
         - name: Sync Forks
           env:
-            GH_TOKEN: ${{ secrets.GH_TOKEN }}
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           run: |
             nRepos=$(gh api graphql -f query='{
                 organization(login: "OpenNeuroDatasets-JSONLD" ) {
