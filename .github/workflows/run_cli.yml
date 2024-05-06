@@ -54,6 +54,8 @@ jobs:
         - name: Update sha.txt file
           env:
             GH_TOKEN: ${{ secrets.ON_WF_PAT }}
+          # NOTE: The SHA value from the GH API response is already a quoted string, so we DO NOT wrap it in quotes when expanding the variable, 
+          # otherwise we get two pairs of quotation marks and we get a "Problems parsing JSON error" :(
           run: |
             URL=https://api.github.com/repos/OpenNeuroDatasets-JSONLD/.github/contents/code/sha.txt
             SHA=$(curl -L \
@@ -68,4 +70,4 @@ jobs:
               -H "Authorization: Bearer ${GH_TOKEN}" \
               -H "X-GitHub-Api-Version: 2022-11-28" \
               ${URL} \
-              -d "{\"message\":\"Updating record of repo SHAs\",\"content\":\"${content_b64}\",\"sha\":\"${SHA}\"}"
+              -d "{\"message\":\"Updating record of repo SHAs\",\"content\":\"${content_b64}\",\"sha\":${SHA}}"
