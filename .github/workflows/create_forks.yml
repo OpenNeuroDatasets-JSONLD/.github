@@ -14,7 +14,7 @@ jobs:
     steps:
       - name: Make forks
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.ON_WF_PAT }}
         run: |
           get_repos() {
             local organization=$1
@@ -41,7 +41,10 @@ jobs:
           
           for repo in $diff; do
             echo "Forking $repo"
-            gh repo fork "OpenNeuroDatasets/${repo}" --org "OpenNeuroDatasets-JSONLD" --clone=false
+            # We may encounter repos that are empty. In this case, the next command will 
+            # have a non-zero exit code and the workflow would crash. To prevent this, we
+            # use the `|| true` operator to ignore the non-zero exit code.
+            gh repo fork "OpenNeuroDatasets/${repo}" --org "OpenNeuroDatasets-JSONLD" --clone=false  || true
             echo "Going to sleep for 5 seconds so GH rate limiter is not afraid..."
             sleep 5
           done

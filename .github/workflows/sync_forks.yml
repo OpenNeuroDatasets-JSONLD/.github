@@ -12,7 +12,7 @@ jobs:
         steps:
         - name: Sync Forks
           env:
-            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            GH_TOKEN: ${{ secrets.ON_WF_PAT }}
           run: |
             nRepos=$(gh api graphql -f query='{
                 organization(login: "OpenNeuroDatasets-JSONLD" ) {
@@ -49,16 +49,14 @@ jobs:
                 echo ${behind_by}
             }
 
-            
             for repo in $reposON_LD; do
-                echo "Checking $repo"
                 behind_by=$(is_behind $repo)
                 if [ "$behind_by" != "null" ] && [ $behind_by -gt 0 ]; then
                     echo "    Fork $repo is behind by $behind_by commits"
-                    # gh repo sync OpenNeuroDatasets-JSONLD/$repo
+                    # Sync the fork and if that fails, prevent the non-zero exit code from crashing the workflow
+                    gh repo sync OpenNeuroDatasets-JSONLD/$repo || true
                 else
                     # echo "Fork $repo is up to date"
                     :
                 fi
             done
-
