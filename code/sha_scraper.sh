@@ -86,6 +86,7 @@ for repo in $reposON_LD; do
 
             if (( ($participant_tsv_http_code > 200 || $participant_tsv_http_code < 300 ) && ($participant_json_http_code > 200 || $participant_json_http_code < 300 ))); then
                 ./run-cli-single-dataset.sh $repo
+            fi
 
             #replace the old sha with the new one
             sed -i "s/${line}/${repo},${sha}/" sha.txt
