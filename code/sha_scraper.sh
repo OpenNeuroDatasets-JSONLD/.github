@@ -36,7 +36,7 @@ reposON_LD=$(gh repo list "OpenNeuroDatasets-JSONLD" --limit ${nRepos} --json na
 #             -H "Accept: application/vnd.github+json" \
 #             -H "Authorization: Bearer ${GH_TOKEN}" \
 #             -H "X-GitHub-Api-Version: 2022-11-28" \
-#             https://api.github.com/repos/${OWNER}/${repo}/commits/ | jq .[0].sha)
+#             https://api.github.com/repos/${OWNER}/${repo}/commits | jq .[0].sha)
         
 #         echo $repo,$sha >> sha.txt
 
@@ -59,7 +59,7 @@ for repo in $reposON_LD; do
         -H "Accept: application/vnd.github+json" \
         -H "Authorization: Bearer ${GH_TOKEN}" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
-        https://api.github.com/repos/${OWNER}/${repo}/commits/ | jq .[0].sha)
+        https://api.github.com/repos/${OWNER}/${repo}/commits | jq .[0].sha)
 
     # Get the line with the old SHA from sha.txt for the repo
     line=$(grep "$repo" sha.txt)
