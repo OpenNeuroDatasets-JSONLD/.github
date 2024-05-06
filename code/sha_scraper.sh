@@ -2,14 +2,16 @@
 
 OWNER="OpenNeuroDatasets-JSONLD"
 
-nRepos=$(gh api graphql -f query='{
-    organization(login: "'"${OWNER}"'" ) {
-        repositories {
-            totalCount
-        }
-    }
-}' | jq -r '.data.organization.repositories.totalCount')
+# TODO: Uncomment once we've confirmed that a few work
+# nRepos=$(gh api graphql -f query='{
+#     organization(login: "'"${OWNER}"'" ) {
+#         repositories {
+#             totalCount
+#         }
+#     }
+# }' | jq -r '.data.organization.repositories.totalCount')
 # Return every repository name except .github (because that one is special)
+nRepos=5
 reposON_LD=$(gh repo list "OpenNeuroDatasets-JSONLD" --limit ${nRepos} --json name --jq '.[].name' | grep -v ".github")
 
 # check if sha.txt doesn't exists
