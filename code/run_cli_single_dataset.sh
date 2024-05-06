@@ -16,8 +16,8 @@ ds_git="git@github.com:OpenNeuroDatasets-JSONLD/${ds_id}"
 # mkdir -p $ldout
 
 
-ldin=/data
-ldout=/data/jsonld
+ldin=data
+ldout=data/jsonld
 
 workdir=${ldin}/${ds_id}
 
