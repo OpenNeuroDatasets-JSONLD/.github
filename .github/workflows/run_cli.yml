@@ -34,13 +34,19 @@ jobs:
             ./sha_scraper.sh 2>&1 | tee -a LOG.txt
         
         - name: Upload JSONLD files as artifacts
-          uses: actions/upload-artifact@v2
+          uses: actions/upload-artifact@v4
           with:
             name: jsonld-files
             path: code/data/jsonld
 
-        - name: Upload JSONLD files as artifacts
-          uses: actions/upload-artifact@v2
+        - name: Upload log file as artifact
+          uses: actions/upload-artifact@v4
           with:
             name: log-file
             path: code/LOG.txt
+
+        - name: Upload sha.txt file as artifact
+          uses: actions/upload-artifact@v4
+          with:
+            name: sha-file
+            path: code/sha.txt
