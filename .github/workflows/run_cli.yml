@@ -13,10 +13,23 @@ jobs:
         name: Get updated JSONLD files
         runs-on: ubuntu-latest
         steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+
+        - name: Set up Python 3.10
+          uses: actions/setup-python@v5
+          with:
+            python-version: "3.10"
+        
+        - name: Install dependencies
+          run: |
+            python -m pip install --upgrade pip
+            pip install -r code/requirements.txt
+
         - name: Detect changes and run CLI
           env:
             GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          working-directory: ./code
+          working-directory: code
           run: |
             ./sha_scraper.sh 2>&1 | tee -a /usr/src/data/LOG.txt
         
