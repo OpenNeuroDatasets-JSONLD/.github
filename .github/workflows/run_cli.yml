@@ -31,6 +31,7 @@ jobs:
             GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           working-directory: code
           run: |
+            mkdir -p /usr/src/data
             ./sha_scraper.sh 2>&1 | tee -a /usr/src/data/LOG.txt
         
         - name: Upload JSONLD files as artifacts
