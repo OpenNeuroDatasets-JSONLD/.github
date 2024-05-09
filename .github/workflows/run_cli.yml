@@ -4,9 +4,9 @@ on:
   schedule:
     - cron: '31 12,0 * * *'
   workflow_dispatch:
-  push:
-    branches:
-      - add-cli-runner-wf
+  # push:
+  #   branches:
+  #     - add-cli-runner-wf
 
 jobs:
     get-updated-files:
@@ -15,6 +15,9 @@ jobs:
       steps:
         - name: Checkout
           uses: actions/checkout@v4
+          with:
+            ref: 'add-cli-runner-wf'
+            token: ${{ secrets.ON_WF_PAT }}
 
         - name: Set up Python 3.10
           uses: actions/setup-python@v5
@@ -30,6 +33,7 @@ jobs:
           env:
             GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           working-directory: code
+          # TODO: Push LOG.txt to openneuro-annotations repo as well
           run: |
             ./sha_scraper.sh 2>&1 | tee -a LOG.txt
         
@@ -52,52 +56,38 @@ jobs:
           with:
             name: sha-file
             path: code/sha.txt
-            
-        # - name: Update sha.txt file
-        #   env:
-        #     GH_TOKEN: ${{ secrets.ON_WF_PAT }}
-        #   # NOTE: The SHA value from the GH API response is already a quoted string, so we DO NOT wrap it in quotes when expanding the variable, 
-        #   # otherwise we get two pairs of quotation marks and we get a "Problems parsing JSON error" :(
-        #   run: |
-        #     URL=https://api.github.com/repos/OpenNeuroDatasets-JSONLD/.github/contents/code/sha.txt
-        #     SHA=$(curl -L \
-        #     -H "Accept: application/vnd.github+json" \
-        #     -H "Authorization: Bearer ${GH_TOKEN}" \
-        #     -H "X-GitHub-Api-Version: 2022-11-28" \
-        #     ${URL} | jq .sha)
-        #     content_b64=$(base64 code/sha.txt -w 0)
-        #     curl -L \
-        #       -X PUT \
-        #       -H "Accept: application/vnd.github+json" \
-        #       -H "Authorization: Bearer ${GH_TOKEN}" \
-        #       -H "X-GitHub-Api-Version: 2022-11-28" \
-        #       ${URL} \
-        #       -d "{\"message\":\"Updating record of repo SHAs\",\"content\":\"${content_b64}\",\"sha\":${SHA}}"
 
     push-updated-files:
-      name: Get updated JSONLD files
+      name: Push updated JSONLD files
       runs-on: ubuntu-latest
       needs: get-updated-files
 
       steps:
+        # - name: Checkout
+        #   uses: actions/checkout@v4
+        #   with:
+        #     ref: 'add-cli-runner-wf'
+        #     token: ${{ secrets.ON_WF_PAT }}
+
         - name: Checkout
           uses: actions/checkout@v4
           with:
-            ref: 'add-cli-runner-wf'
-            token: ${{ secrets.ON_WF_PAT }}
+            repository: 'neurobagel/openneuro-annotations'
+            ref: 'auto-update-jsonld'
+            token: ${{ secrets.NB_OPENNEURO_ANNOTATIONS_RW }}
 
         - name: Download sha.txt artifact
           uses: actions/download-artifact@v4
           with:
             name: sha-file
+            # NOTE: Path must be a directory, not a file
             path: code
 
+        # Since we're using git commands, should also prevent empty commits
         - name: Commit and push updated sha.txt file
-          # env:
-          #   GH_TOKEN: ${{ secrets.ON_WF_PAT }}
           run: |
             git config user.name "GitHub Actions Bot"
             git config user.email "<>"
             git add code/sha.txt
             git commit -m "[bot] Update record of repo SHAs"
-            git push origin add-cli-runner-wf
+            git push origin auto-update-jsonld
