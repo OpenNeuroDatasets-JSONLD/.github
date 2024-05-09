@@ -50,7 +50,7 @@ for repo in $reposON_LD; do
 
             if (( ($participant_tsv_http_code > 200 || $participant_tsv_http_code < 300 ) && ($participant_json_http_code > 200 || $participant_json_http_code < 300 ))); then
                 echo "${repo}: running the CLI"
-                ./run-cli-single-dataset.sh $repo
+                ./run_cli_single_dataset.sh $repo
             fi
 
             # Replace the old SHA with the new one
