@@ -91,4 +91,4 @@ jobs:
             git config user.email "<>"
             git add code/sha.txt
             git commit -m "[bot] Update record of repo SHAs"
-            git push origin auto-update-jsonld
+            git push origin auto-update-jsonlds
