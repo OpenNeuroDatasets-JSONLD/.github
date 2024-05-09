@@ -11,7 +11,7 @@ OWNER="OpenNeuroDatasets-JSONLD"
 #     }
 # }' | jq -r '.data.organization.repositories.totalCount')
 # Return every repository name except .github (because that one is special)
-nRepos=5
+nRepos=10
 # We need to add 1 to num of repos b/c by default .github will always be first in the list
 reposON_LD=$(gh repo list "OpenNeuroDatasets-JSONLD" --limit $((nRepos+1)) --json name --jq '.[].name' | grep -v ".github")
 
