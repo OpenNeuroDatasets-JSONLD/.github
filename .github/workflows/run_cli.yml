@@ -19,6 +19,7 @@ jobs:
           #   ref: 'add-cli-runner-wf'
           #   token: ${{ secrets.ON_WF_PAT }}
 
+        # TODO: Cache Python dependencies
         - name: Set up Python 3.10
           uses: actions/setup-python@v5
           with:
@@ -73,7 +74,7 @@ jobs:
           uses: actions/checkout@v4
           with:
             repository: 'neurobagel/openneuro-annotations'
-            ref: 'auto-update-jsonld'
+            ref: 'auto-update-jsonlds'
             token: ${{ secrets.NB_OPENNEURO_ANNOTATIONS_RW }}
 
         - name: Download sha.txt artifact
