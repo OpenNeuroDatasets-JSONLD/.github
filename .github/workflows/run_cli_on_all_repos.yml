@@ -53,3 +53,4 @@ jobs:
       uses: ./.github/workflows/run_cli_on_repo_list.yml
       with:
         dataset-list: ${{ needs.get-repos.outputs.dataset_list }}
+      secrets: inherit
