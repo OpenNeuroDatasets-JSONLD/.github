@@ -64,6 +64,13 @@ jobs:
           name: cli-log-file
           path: code/LOG.txt
 
+      # TEMP!
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: 'main'
+          token: ${{ secrets.ON_WF_PAT }}
+
       # - name: Upload sha.txt file as artifact
       #   uses: actions/upload-artifact@v4
       #   with:
@@ -76,7 +83,6 @@ jobs:
           if ! git diff --quiet code/sha.txt; then
             git config user.name "GitHub Actions Bot"
             git config user.email "<>"
-            git checkout main
             git add code/sha.txt
             git commit -m "[bot] Update record of repo SHAs"
             git push origin main
