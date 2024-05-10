@@ -20,6 +20,13 @@ jobs:
         # with:
         #   ref: 'add-cli-runner-wf'
         #   token: ${{ secrets.ON_WF_PAT }}
+      
+      # Need to do this, otherwise get [No working git-annex installation of version >= 8.20200309
+      - name: Install git-annex
+        run: |
+          sudo apt-get update
+          sudo apt-get install git-annex
+          echo "git-annex version: $(git-annex version)"
 
       # TODO: Cache Python dependencies
       - name: Set up Python 3.10
