@@ -27,9 +27,10 @@ jobs:
           working-directory: code
           # TODO: Remove repo sort, we're currently doing this to ensure we get the oldest repos first for testing
           # TODO: Remove hardcoded repos
+          # NOTE: When a repo doesn't exist, the curl command complains confusingly: jq: error (at <stdin>:4): Cannot index object with number
           run: |
             OWNER="OpenNeuroDatasets-JSONLD"
-            reposON_LD="ds000001 ds000002 ds000003 ds000004 ds000005"
+            reposON_LD="ds000001 ds000002 ds000003 ds000005 ds000006"
             for repo in $reposON_LD; do
               sha=$(curl -L \
                 -H "Accept: application/vnd.github+json" \
