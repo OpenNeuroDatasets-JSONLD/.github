@@ -49,22 +49,15 @@ for repo in $reposON_LD; do
             https://api.github.com/repos/${OWNER}/${repo}/contents/participants.json)
 
             if (( ($participant_tsv_http_code > 200 || $participant_tsv_http_code < 300 ) && ($participant_json_http_code > 200 || $participant_json_http_code < 300 ))); then
-                echo "${repo}: running the CLI"
-                ./run_cli_single_dataset.sh $repo
-
-                # TODO: Revisit
-                # If the CLI did not run successfully, exit loop without updating SHA
-                if [ $? -ne 0 ]; then
-                    echo "Error occurred while running the CLI for ${repo}"
-                    break
-                fi
+                # Add repo ID and current SHA of repo to a list of datasets to run the CLI on
+                echo $repo,$sha >> dataset_list_for_cli.txt
+            else
+                # If files needed for CLI not found, simply replace the old SHA with the new one
+                echo "${repo}: Updating SHA in file"
+                sed -i "s/${line}/${repo},${sha}/" sha.txt
             fi
-
-            # Replace the old SHA with the new one
-            echo "${repo}: Updating SHA in file"
-            sed -i "s/${line}/${repo},${sha}/" sha.txt
         fi   
-    # Otherwise, write current SHA to file
+    # If repo not found in file, write current SHA to file
     else
         echo "${repo}: SHA not found, writing latest SHA to file"
         echo $repo,$sha >> sha.txt
