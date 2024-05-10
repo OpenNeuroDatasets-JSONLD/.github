@@ -1,0 +1,49 @@
+name: Run CLI on all repos
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - add-cli-runner-wf
+
+jobs:
+    get-repos:
+      name: Get repos
+      runs-on: ubuntu-latest
+      outputs:
+        dataset_list: ${{ steps.get-repos.outputs.repos }}
+
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+          # with:
+          #   ref: 'add-cli-runner-wf'
+          #   token: ${{ secrets.ON_WF_PAT }}
+
+        - id: get-repos
+          name: Get repos
+          env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          working-directory: code
+          run: |
+            OWNER="OpenNeuroDatasets-JSONLD"
+            nRepos=5
+            reposON_LD=$(gh repo list "$OWNER" --limit $((nRepos+1)) --json name --jq '.[].name' | grep -v ".github")
+            for repo in $reposON_LD; do
+              sha=$(curl -L \
+                -H "Accept: application/vnd.github+json" \
+                -H "Authorization: Bearer ${GH_TOKEN}" \
+                -H "X-GitHub-Api-Version: 2022-11-28" \
+                https://api.github.com/repos/${OWNER}/${repo}/commits | jq .[0].sha)
+              echo $repo,$sha >> repos.txt
+            done
+            echo $(cat repos.txt)
+            echo "repos=$(cat repos.txt)" >> "$GITHUB_OUTPUT"
+
+    call-cli-runner:
+      needs: get-repos
+      # if: ${{ needs.get-updated-files.outputs.dataset_list != '' }}
+      # TODO: Replace with full workflow reference: OpenNeuroDatasets-JSONLD/.github/workflows/run_cli_on_repo_list.yml@main
+      uses: ./.github/workflows/run_cli_on_repo_list.yml
+      with:
+        dataset-list: ${{ needs.get-repos.outputs.dataset_list }}

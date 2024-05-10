@@ -59,8 +59,8 @@ jobs:
       #   with:
       #     name: sha-file
       #     path: code/sha.txt
-
       - name: Commit and push updated sha.txt file
+        # TODO: If sha.txt was not updated, skip this step
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "<>"
@@ -96,6 +96,7 @@ jobs:
 
       # Since we're using git commands, should also prevent empty commits
       - name: Commit and push updated JSONLD files
+        # TODO: If there are no JSONLD files to update, skip this step
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "<>"
