@@ -50,7 +50,7 @@ for repo in $reposON_LD; do
 
             if (( ($participant_tsv_http_code > 200 || $participant_tsv_http_code < 300 ) && ($participant_json_http_code > 200 || $participant_json_http_code < 300 ))); then
                 # Add repo ID and current SHA of repo to a list of datasets to run the CLI on
-                echo $repo,$sha >> dataset_list_for_cli.txt
+                echo $repo,$sha >> changed_repos.txt
             else
                 # If files needed for CLI not found, simply replace the old SHA with the new one
                 echo "${repo}: Updating SHA in file"
