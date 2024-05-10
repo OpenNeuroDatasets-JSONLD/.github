@@ -1,4 +1,4 @@
-name: Run CLI on repo update
+name: Run CLI on changed repos
 
 on:
   schedule:
@@ -12,83 +12,48 @@ jobs:
     get-updated-files:
       name: Get updated JSONLD files
       runs-on: ubuntu-latest
+      outputs:
+        dataset_list: ${{ steps.detect-changed-repos.outputs.changed_repos }}
+
       steps:
         - name: Checkout
           uses: actions/checkout@v4
-          # with:
-          #   ref: 'add-cli-runner-wf'
-          #   token: ${{ secrets.ON_WF_PAT }}
-
-        # TODO: Cache Python dependencies
-        - name: Set up Python 3.10
-          uses: actions/setup-python@v5
           with:
-            python-version: "3.10"
-        
-        - name: Install dependencies
-          run: |
-            python -m pip install --upgrade pip
-            pip install -r code/requirements.txt
+            ref: 'add-cli-runner-wf'
+            token: ${{ secrets.ON_WF_PAT }}
 
-        - name: Detect changes and run CLI
+        - id: detect-changed-repos
+          name: Detect changed repos
           env:
             GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           working-directory: code
-          # TODO: Push LOG.txt to openneuro-annotations repo as well
           run: |
             ./sha_scraper.sh 2>&1 | tee -a LOG.txt
+            echo "changed_repos=$(cat changed_repos.txt)" >> "$GITHUB_OUTPUT"
         
-        # TODO: If this gets too slow, try https://github.com/actions/cache
-        - name: Upload JSONLD files as artifacts
-          uses: actions/upload-artifact@v4
-          with:
-            name: jsonld-files
-            path: code/data/jsonld
-            # TODO: Add a retention policy to delete old artifacts
-
+        # TODO: Push LOG.txt to some repo
         - name: Upload log file as artifact
           uses: actions/upload-artifact@v4
           with:
             name: log-file
             path: code/LOG.txt
 
-        - name: Upload sha.txt file as artifact
-          uses: actions/upload-artifact@v4
-          with:
-            name: sha-file
-            path: code/sha.txt
-
-    push-updated-files:
-      name: Push updated JSONLD files
-      runs-on: ubuntu-latest
-      needs: get-updated-files
-
-      steps:
-        # - name: Checkout
-        #   uses: actions/checkout@v4
+        # NOTE: sha.txt needs to be updated twice. Can't share artifacts across wfs?
+        # - name: Upload sha.txt file as artifact
+        #   uses: actions/upload-artifact@v4
         #   with:
-        #     ref: 'add-cli-runner-wf'
-        #     token: ${{ secrets.ON_WF_PAT }}
-
-        - name: Checkout
-          uses: actions/checkout@v4
-          with:
-            repository: 'neurobagel/openneuro-annotations'
-            ref: 'auto-update-jsonlds'
-            token: ${{ secrets.NB_OPENNEURO_ANNOTATIONS_RW }}
-
-        - name: Download sha.txt artifact
-          uses: actions/download-artifact@v4
-          with:
-            name: sha-file
-            # NOTE: Path must be a directory, not a file
-            path: code
-
-        # Since we're using git commands, should also prevent empty commits
+        #     name: sha-file
+        #     path: code/sha.txt
         - name: Commit and push updated sha.txt file
           run: |
             git config user.name "GitHub Actions Bot"
             git config user.email "<>"
             git add code/sha.txt
             git commit -m "[bot] Update record of repo SHAs"
-            git push origin auto-update-jsonlds
+            git push origin add-cli-runner-wf
+
+    call-cli-runner:
+      needs: get-updated-files
+      uses: OpenNeuroDatasets-JSONLD/.github/workflows/run_cli_on_repo_list.yml@add-cli-runner-wf
+      with:
+        dataset-list: ${{ needs.get-updated-files.outputs.dataset_list }}

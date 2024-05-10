@@ -1,0 +1,107 @@
+name: Run CLI on repo list
+
+on:
+  workflow_call:
+    inputs:
+      dataset-list:
+        description: "String representing a list of repos to update"
+        # Default assumes there are no repos to update
+        default: ""
+        required: false
+        type: string
+
+jobs:
+  batch-run-cli:
+    name: Batch run CLI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: 'add-cli-runner-wf'
+          token: ${{ secrets.ON_WF_PAT }}
+
+      # TODO: Cache Python dependencies
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r code/requirements.txt
+
+      - name: Run CLI
+        # env:
+        #   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        working-directory: code
+        run: |
+          echo ${{ inputs.dataset-list }}
+          ./batch_run_cli.sh ${{ inputs.dataset-list }} 2>&1 | tee -a LOG.txt
+      
+      # TODO: If this gets too slow, try https://github.com/actions/cache
+      - name: Upload JSONLD files as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: jsonld-files
+          path: code/data/jsonld
+          # TODO: Add a retention policy to delete old artifacts
+
+      - name: Upload log file as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cli-log-file
+          path: code/LOG.txt
+
+      # - name: Upload sha.txt file as artifact
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: sha-file
+      #     path: code/sha.txt
+
+      - name: Commit and push updated sha.txt file
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "<>"
+          git add code/sha.txt
+          git commit -m "[bot] Update record of repo SHAs"
+          git push origin add-cli-runner-wf
+
+  push-updated-files:
+    name: Push updated JSONLD files
+    runs-on: ubuntu-latest
+    needs: batch-run-cli
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          repository: 'neurobagel/openneuro-annotations'
+          ref: 'auto-update-jsonlds'
+          token: ${{ secrets.NB_OPENNEURO_ANNOTATIONS_RW }}
+
+      - name: Download JSONLD files artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: jsonld-files
+          path: data_temp
+
+      - name: Download CLI log artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cli-log-file
+          # NOTE: Path must be a directory, not a file
+          path: log_temp
+
+      # Since we're using git commands, should also prevent empty commits
+      - name: Commit and push updated JSONLD files
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "<>"
+          rm jsonld/*
+          cp data_temp/jsonld/* jsonld/
+          cp log_temp/LOG.txt jsonld/
+          git add -A jsonld/*
+          git commit -m "[bot] Update JSONLD files"
+          git push origin auto-update-jsonlds
