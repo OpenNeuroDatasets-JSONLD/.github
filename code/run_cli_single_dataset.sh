@@ -19,7 +19,9 @@ ds_git="git@github.com:OpenNeuroDatasets-JSONLD/${ds_id}"
 ldin=data
 ldout=data/jsonld
 
-workdir=${ldin}/${ds_id}
+# NOTE: realpath is needed to get an absolute path of the directory for mounting, 
+# otherwise Docker will error out at the mount step
+workdir=$(realpath ${ldin}/${ds_id})
 
 mkdir -p ${ldin}
 mkdir -p ${ldout}
