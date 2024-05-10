@@ -38,7 +38,11 @@ jobs:
               echo $repo,$sha >> repos.txt
             done
             echo $(cat repos.txt)
-            echo "repos=$(cat repos.txt)" >> "$GITHUB_OUTPUT"
+            echo 'repos<<EOF' >> "$GITHUB_OUTPUT"
+            for line in $(cat repos.txt); do
+              echo $line >> "$GITHUB_OUTPUT"
+            done
+            echo 'EOF' >> "$GITHUB_OUTPUT"
 
     call-cli-runner:
       needs: get-repos
