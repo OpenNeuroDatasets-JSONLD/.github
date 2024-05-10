@@ -16,7 +16,14 @@ for dataset in $(cat $dataset_list_path); do
         # Replace the old SHA with the new one
         echo "${repo}: Updating SHA in file"
         line=$(grep "$repo" sha.txt)
-        sed -i "s/${line}/${repo},${sha}/" sha.txt
+
+        # TODO: Remove this section? Prevents wf from exiting if the repo does not already exist in sha.txt (sed error)
+        if [ ! -z "$line" ]; then
+            sed -i "s/${line}/${repo},${sha}/" sha.txt
+        else
+            echo "${repo}: SHA not found, writing latest SHA to file"
+            echo $repo,$sha >> sha.txt
+        fi
     else
         echo "${repo}: CLI failed"
     fi

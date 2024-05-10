@@ -70,13 +70,15 @@ jobs:
       #     name: sha-file
       #     path: code/sha.txt
       - name: Commit and push updated sha.txt file
-        # TODO: If sha.txt was not updated, skip this step
+        # If sha.txt was not updated (i.e., all datasets failed?), skip this step
         run: |
-          git config user.name "GitHub Actions Bot"
-          git config user.email "<>"
-          git add code/sha.txt
-          git commit -m "[bot] Update record of repo SHAs"
-          git push origin main
+          if ! git diff --quiet code/sha.txt; then
+            git config user.name "GitHub Actions Bot"
+            git config user.email "<>"
+            git add code/sha.txt
+            git commit -m "[bot] Update record of repo SHAs"
+            git push origin main
+          fi
 
   push-updated-files:
     name: Push updated JSONLD files
