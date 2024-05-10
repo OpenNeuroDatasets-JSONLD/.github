@@ -18,9 +18,9 @@ jobs:
       steps:
         - name: Checkout
           uses: actions/checkout@v4
-          with:
-            ref: 'add-cli-runner-wf'
-            token: ${{ secrets.ON_WF_PAT }}
+          # with:
+          #   ref: 'add-cli-runner-wf'
+          #   token: ${{ secrets.ON_WF_PAT }}
 
         - id: detect-changed-repos
           name: Detect changed repos
@@ -46,14 +46,17 @@ jobs:
         #     path: code/sha.txt
         - name: Commit and push updated sha.txt file
           run: |
-            git config user.name "GitHub Actions Bot"
-            git config user.email "<>"
-            git add code/sha.txt
-            git commit -m "[bot] Update record of repo SHAs"
-            git push origin add-cli-runner-wf
+            if ! git diff --quiet code/sha.txt; then
+              git config user.name "GitHub Actions Bot"
+              git config user.email "<>"
+              git add code/sha.txt
+              git commit -m "[bot] Update record of repo SHAs"
+              git push origin main
+            fi
 
     call-cli-runner:
       needs: get-updated-files
+      if: ${{ needs.get-updated-files.outputs.dataset_list != '' }}
       # TODO: Replace with full workflow reference: OpenNeuroDatasets-JSONLD/.github/workflows/run_cli_on_repo_list.yml@main
       uses: ./.github/workflows/run_cli_on_repo_list.yml
       with:

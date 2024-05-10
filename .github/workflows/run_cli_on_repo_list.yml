@@ -5,9 +5,9 @@ on:
     inputs:
       dataset-list:
         description: "String representing a list of repos to update"
-        # Default assumes there are no repos to update
-        default: ""
-        required: false
+        # # Default assumes there are no repos to update
+        # default: ""
+        required: true
         type: string
 
 jobs:
@@ -17,9 +17,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: 'add-cli-runner-wf'
-          token: ${{ secrets.ON_WF_PAT }}
+        # with:
+        #   ref: 'add-cli-runner-wf'
+        #   token: ${{ secrets.ON_WF_PAT }}
 
       # TODO: Cache Python dependencies
       - name: Set up Python 3.10
@@ -66,7 +66,7 @@ jobs:
           git config user.email "<>"
           git add code/sha.txt
           git commit -m "[bot] Update record of repo SHAs"
-          git push origin add-cli-runner-wf
+          git push origin main
 
   push-updated-files:
     name: Push updated JSONLD files
