@@ -1,9 +1,10 @@
 #!/bin/bash
 
 # A space-separated list where each item is: <repo ID>,"<SHA>"
-dataset_list=$1
+dataset_list_path=$1
 
-for dataset in $dataset_list; do
+for dataset in $(cat $dataset_list_path); do
+    echo "Repo: $dataset"
     repo=$(echo $dataset | cut -d ',' -f 1)
     sha=$(echo $dataset | cut -d ',' -f 2)
 
