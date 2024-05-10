@@ -25,10 +25,11 @@ jobs:
           env:
             GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           working-directory: code
+          # TODO: Remove repo sort, we're currently doing this to ensure we get the oldest repos first for testing
           run: |
             OWNER="OpenNeuroDatasets-JSONLD"
             nRepos=5
-            reposON_LD=$(gh repo list "$OWNER" --limit $((nRepos+1)) --json name --jq '.[].name' | grep -v ".github")
+            reposON_LD=$(gh repo list "$OWNER" --limit $((nRepos+1)) --json name --jq '.[].name' | grep -v ".github" | sort)
             for repo in $reposON_LD; do
               sha=$(curl -L \
                 -H "Accept: application/vnd.github+json" \
