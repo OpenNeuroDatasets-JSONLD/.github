@@ -15,6 +15,8 @@ nRepos=10
 # We need to add 1 to num of repos b/c by default .github will always be first in the list
 reposON_LD=$(gh repo list "OpenNeuroDatasets-JSONLD" --limit $((nRepos+1)) --json name --jq '.[].name' | grep -v ".github")
 
+# Make empty file to keep track of repos that have changed
+touch changed_repos.txt
 for repo in $reposON_LD; do
     # Get the SHA of the latest commit in the repo (NOTE: This will always be from the default branch)
     # TODO: Test if the SHA we grab here changes with a new commit
