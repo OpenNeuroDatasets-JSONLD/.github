@@ -26,7 +26,7 @@ mkdir -p ${ldout}
 
 out="${ldout}/${ds_id}.jsonld"
 
-datalad clone ${ds_git} ${workdir}
+datalad clone ${ds_portal} ${workdir}
 datalad get -d $workdir "${workdir}/participants.tsv"
 datalad get -d $workdir "${workdir}/participants.json"
 datalad get -d $workdir "${workdir}/dataset_description.json" # Check if the script will error out if the file doesn't exist
