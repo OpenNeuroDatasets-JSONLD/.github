@@ -38,7 +38,7 @@ jobs:
         working-directory: code
         run: |
           echo ${{ inputs.dataset-list }}
-          ./batch_run_cli.sh ${{ inputs.dataset-list }} 2>&1 | tee -a LOG.txt
+          ./batch_run_cli.sh "${{ inputs.dataset-list }}" 2>&1 | tee -a LOG.txt
       
       # TODO: If this gets too slow, try https://github.com/actions/cache
       - name: Upload JSONLD files as artifacts
