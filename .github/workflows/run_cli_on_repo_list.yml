@@ -64,13 +64,6 @@ jobs:
           name: cli-log-file
           path: code/LOG.txt
 
-      # TEMP!
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          ref: 'main'
-          token: ${{ secrets.ON_WF_PAT }}
-
       # - name: Upload sha.txt file as artifact
       #   uses: actions/upload-artifact@v4
       #   with:
@@ -85,7 +78,7 @@ jobs:
             git config user.email "<>"
             git add code/sha.txt
             git commit -m "[bot] Update record of repo SHAs"
-            git push origin main
+            git push origin auto-update-jsonlds
           fi
 
   push-updated-files:
@@ -120,9 +113,9 @@ jobs:
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "<>"
-          rm jsonld/*
+          rm -f jsonld/*
           cp data_temp/jsonld/* jsonld/
           cp log_temp/LOG.txt jsonld/
           git add -A jsonld/*
-          git commit -m "[bot] Update JSONLD files"
+          git commit -m "[bot] Update JSONLD files and CLI log"
           git push origin auto-update-jsonlds
