@@ -17,9 +17,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        # with:
-        #   ref: 'add-cli-runner-wf'
-        #   token: ${{ secrets.ON_WF_PAT }}
+        with:
+          ref: 'main'
+          token: ${{ secrets.ON_WF_PAT }}
       
       # Need to do this for datalad, otherwise get [No working git-annex installation of version >= 8.20200309
       # Datalad also complains if author info is not set
