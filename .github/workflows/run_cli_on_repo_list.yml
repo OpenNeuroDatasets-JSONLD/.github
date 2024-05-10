@@ -95,18 +95,21 @@ jobs:
           ref: 'auto-update-jsonlds'
           token: ${{ secrets.NB_OPENNEURO_ANNOTATIONS_RW }}
 
+      - name: Clear existing jsonld files
+        run: rm -f jsonld/*
+
       - name: Download JSONLD files artifact
         uses: actions/download-artifact@v4
         with:
           name: jsonld-files
-          path: data_temp
+          path: jsonld
 
       - name: Download CLI log artifact
         uses: actions/download-artifact@v4
         with:
           name: cli-log-file
           # NOTE: Path must be a directory, not a file
-          path: log_temp
+          path: jsonld
 
       # Since we're using git commands, should also prevent empty commits
       - name: Commit and push updated JSONLD files
@@ -114,9 +117,6 @@ jobs:
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "<>"
-          rm -f jsonld/*
-          cp data_temp/jsonld/* jsonld/
-          cp log_temp/LOG.txt jsonld/
           git add -A jsonld/*
           git commit -m "[bot] Update JSONLD files and CLI log"
           git push origin auto-update-jsonlds
