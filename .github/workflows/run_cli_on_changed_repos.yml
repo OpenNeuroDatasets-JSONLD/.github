@@ -54,6 +54,7 @@ jobs:
 
     call-cli-runner:
       needs: get-updated-files
-      uses: OpenNeuroDatasets-JSONLD/.github/workflows/run_cli_on_repo_list.yml@add-cli-runner-wf
+      # TODO: Replace with full workflow reference: OpenNeuroDatasets-JSONLD/.github/workflows/run_cli_on_repo_list.yml@main
+      uses: ./.github/workflows/run_cli_on_repo_list.yml
       with:
         dataset-list: ${{ needs.get-updated-files.outputs.dataset_list }}
