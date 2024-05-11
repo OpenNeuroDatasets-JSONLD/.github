@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# This script accepts a list of repository (dataset) IDs and their corresponding latest SHAs.
+# It runs the Neurobagel CLI on each dataset and updates the SHA in sha.txt if the CLI runs successfully.
+
 # A space-separated list where each item is: <repo ID>,<SHA>
 dataset_list_path=$1
 
