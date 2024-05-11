@@ -49,7 +49,10 @@ jobs:
         working-directory: code
         # NOTE: Passing input as a file to avoid issues with multiline strings
         run: |
-          printf "%s\n" "${{ inputs.dataset-list }}" > dataset_list.txt
+          while IFS= read -r line; do
+            printf "%s\n" "$line" >> dataset_list.txt
+          done <<< "${{ inputs.dataset-list }}"
+
           ./batch_run_cli.sh dataset_list.txt 2>&1 | tee -a LOG.txt
       
       # TODO: If this gets too slow, try https://github.com/actions/cache
