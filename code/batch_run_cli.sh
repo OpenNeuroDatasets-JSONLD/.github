@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# A space-separated list where each item is: <repo ID>,"<SHA>"
+# A space-separated list where each item is: <repo ID>,<SHA>
 dataset_list_path=$1
 
 for dataset in $(cat $dataset_list_path); do
-    echo "Repo: $dataset"
     repo=$(echo $dataset | cut -d ',' -f 1)
-    sha=$(echo $dataset | cut -d ',' -f 2)
+    sha=\"$(echo $dataset | cut -d ',' -f 2)\"
+    echo "Repo info: $repo,$sha"
 
     echo "${repo}: Running the CLI"
     ./run_cli_single_dataset.sh $repo
