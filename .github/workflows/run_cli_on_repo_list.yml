@@ -1,12 +1,14 @@
+# This is a reusable workflow that runs the CLI on a provided list of repos, 
+# and uploads the JSONLD files along with the CLI log to a branch in neurobagel/openneuro-annotations.
+# The workflow updates the sha.txt file for repos on which the CLI ran successfully.
 name: Run CLI on repo list
 
 on:
   workflow_call:
     inputs:
+      # NOTE: If this input is empty, the workflow should not run
       dataset-list:
         description: "String representing a list of repos to update"
-        # # Default assumes there are no repos to update
-        # default: ""
         required: true
         type: string
 
@@ -17,13 +19,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        # NOTE: Need token if you want to git push to a repo!
+        # NOTE: A token is needed if you want to git push to a repo
         with:
           ref: 'add-cli-runner-wf'
           token: ${{ secrets.ON_WF_PAT }}
       
-      # Need to do this for datalad, otherwise get [No working git-annex installation of version >= 8.20200309
-      # Datalad also complains if author info is not set
+      # git-annex is required for datalad
+      # Also setting author info here for Git to suppress datalad warnings
       - name: Install git-annex
         run: |
           sudo apt-get update
@@ -44,9 +46,8 @@ jobs:
           pip install -r code/requirements.txt
 
       - name: Run CLI
-        # env:
-        #   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         working-directory: code
+        # NOTE: Passing input as a file to avoid issues with multiline strings
         run: |
           echo "${{ inputs.dataset-list }}" > dataset_list.txt
           ./batch_run_cli.sh dataset_list.txt 2>&1 | tee -a LOG.txt
@@ -65,12 +66,6 @@ jobs:
           name: cli-log-file
           path: code/LOG.txt
 
-      # - name: Upload sha.txt file as artifact
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: sha-file
-      #     path: code/sha.txt
-      # TODO: Remove checking out main - can do that at checkout step
       - name: Commit and push updated sha.txt file
         # If sha.txt was not updated (i.e., all datasets failed?), skip this step
         run: |

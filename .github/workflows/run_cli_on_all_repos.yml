@@ -1,3 +1,4 @@
+# This workflow calls a reusable workflow to run the CLI on all repos in OpenNeuroDatasets-JSONLD.
 name: Run CLI on all repos
 
 on:
@@ -16,33 +17,31 @@ jobs:
       steps:
         - name: Checkout
           uses: actions/checkout@v4
-          # with:
-          #   ref: 'add-cli-runner-wf'
-          #   token: ${{ secrets.ON_WF_PAT }}
 
+        # This step gets a list of all repos in OpenNeuroDatasets-JSONLD, and fetches each repo's latest SHA
+        # Each repo ID and its corresponding SHA are written to a job output variable "repos"
+        #
+        # We use syntax here to ensure that "repos" is a multiline string, where each line represents one repo
+        # See: https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#multiline-strings
         - id: get-repos
           name: Get repos
           env:
             GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           working-directory: code
-          # TODO: Remove repo sort, we're currently doing this to ensure we get the oldest repos first for testing
-          # TODO: Remove hardcoded repos
+          # TODO: Replace hardcoded repos with commmand to fetch full list
           # NOTE: When a repo doesn't exist, the curl command complains confusingly: jq: error (at <stdin>:4): Cannot index object with number
           run: |
             OWNER="OpenNeuroDatasets-JSONLD"
             reposON_LD="ds000001 ds000002 ds000003 ds000005 ds000006"
+
+            echo 'repos<<EOF' >> "$GITHUB_OUTPUT"
             for repo in $reposON_LD; do
               sha=$(curl -L \
                 -H "Accept: application/vnd.github+json" \
                 -H "Authorization: Bearer ${GH_TOKEN}" \
                 -H "X-GitHub-Api-Version: 2022-11-28" \
                 https://api.github.com/repos/${OWNER}/${repo}/commits | jq .[0].sha)
-              echo $repo,$sha >> repos.txt
-            done
-            echo $(cat repos.txt)
-            echo 'repos<<EOF' >> "$GITHUB_OUTPUT"
-            for line in $(cat repos.txt); do
-              echo $line >> "$GITHUB_OUTPUT"
+              echo $repo,$sha >> "$GITHUB_OUTPUT"
             done
             echo 'EOF' >> "$GITHUB_OUTPUT"
 

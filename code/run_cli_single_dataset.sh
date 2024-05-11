@@ -10,12 +10,6 @@ docker pull neurobagel/bagelcli:latest
 ds_portal="https://github.com/OpenNeuroDatasets-JSONLD/${ds_id}.git"
 ds_git="git@github.com:OpenNeuroDatasets-JSONLD/${ds_id}"
 
-# ldin="inputs/openneuro-jsonld/"
-# mkdir -p $ldin
-# ldout="outputs/openneuro-jsonld/"
-# mkdir -p $ldout
-
-
 ldin=data
 mkdir -p ${ldin}
 ldout=data/jsonld
@@ -29,7 +23,7 @@ out="${ldout}/${ds_id}.jsonld"
 datalad clone ${ds_portal} ${workdir}
 datalad get -d $workdir "${workdir}/participants.tsv"
 datalad get -d $workdir "${workdir}/participants.json"
-datalad get -d $workdir "${workdir}/dataset_description.json" # Check if the script will error out if the file doesn't exist
+datalad get -d $workdir "${workdir}/dataset_description.json"
 
 # Get the dataset label
 ds_name=$(python extract_bids_dataset_name.py --ds $workdir)
