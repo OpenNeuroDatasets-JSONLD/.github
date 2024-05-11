@@ -62,7 +62,7 @@ jobs:
               git config user.email "<>"
               git add code/sha.txt
               git commit -m "[bot] Update record of repo SHAs"
-              git push origin main
+              git push origin add-cli-runner-wf
             fi
 
     call-run-cli-on-repo-list:

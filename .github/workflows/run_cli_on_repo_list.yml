@@ -49,7 +49,7 @@ jobs:
         working-directory: code
         # NOTE: Passing input as a file to avoid issues with multiline strings
         run: |
-          echo "${{ inputs.dataset-list }}" > dataset_list.txt
+          echo ${{ inputs.dataset-list }} > dataset_list.txt
           ./batch_run_cli.sh dataset_list.txt 2>&1 | tee -a LOG.txt
       
       # TODO: If this gets too slow, try https://github.com/actions/cache
