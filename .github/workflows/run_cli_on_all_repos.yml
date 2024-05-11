@@ -45,7 +45,7 @@ jobs:
             done
             echo 'EOF' >> "$GITHUB_OUTPUT"
 
-    call-cli-runner:
+    call-run-cli-on-repo-list:
       needs: get-repos
       # if: ${{ needs.get-updated-files.outputs.dataset_list != '' }}
       # TODO: Replace with full workflow reference: OpenNeuroDatasets-JSONLD/.github/workflows/run_cli_on_repo_list.yml@main
