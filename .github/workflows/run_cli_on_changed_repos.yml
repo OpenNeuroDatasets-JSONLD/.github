@@ -1,5 +1,5 @@
 # This workflow runs on a schedule and when manually triggered. It checks for changes to the OpenNeuroDatasets-JSONLD repos, 
-# and calls a reusable workflow to run the CLI on repos that have changed or are new.
+# and calls a reusable workflow to run the CLI on repos that have changed *or* are new.
 # The workflow also updates the sha.txt file.
 name: Run CLI on changed repos
 
@@ -7,9 +7,6 @@ on:
   schedule:
     - cron: '31 12,0 * * *'
   workflow_dispatch:
-  push:
-    branches:
-      - add-cli-runner-wf
 
 jobs:
     get-updated-files:
@@ -62,15 +59,14 @@ jobs:
               git config user.email "<>"
               git add code/sha.txt
               git commit -m "[bot] Update record of repo SHAs"
-              git push origin add-cli-runner-wf
+              git push origin main
             fi
 
     call-run-cli-on-repo-list:
       needs: get-updated-files
       # Only run this job if the list of changed repos is not empty
       if: ${{ needs.get-updated-files.outputs.dataset_list != '' }}
-      # TODO: Replace with full workflow reference: OpenNeuroDatasets-JSONLD/.github/workflows/run_cli_on_repo_list.yml@main
-      uses: ./.github/workflows/run_cli_on_repo_list.yml
+      uses: OpenNeuroDatasets-JSONLD/.github/workflows/run_cli_on_repo_list.yml@main
       with:
         dataset-list: ${{ needs.get-updated-files.outputs.dataset_list }}
       secrets: inherit

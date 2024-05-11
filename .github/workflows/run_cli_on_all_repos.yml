@@ -1,11 +1,8 @@
-# This workflow calls a reusable workflow to run the CLI on all repos in OpenNeuroDatasets-JSONLD.
+# This workflow only runs when manually triggered, and calls a reusable workflow to run the CLI on all repos in OpenNeuroDatasets-JSONLD.
 name: Run CLI on all repos
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - add-cli-runner-wf
 
 jobs:
     get-repos:
@@ -47,9 +44,7 @@ jobs:
 
     call-run-cli-on-repo-list:
       needs: get-repos
-      # if: ${{ needs.get-updated-files.outputs.dataset_list != '' }}
-      # TODO: Replace with full workflow reference: OpenNeuroDatasets-JSONLD/.github/workflows/run_cli_on_repo_list.yml@main
-      uses: ./.github/workflows/run_cli_on_repo_list.yml
+      uses: OpenNeuroDatasets-JSONLD/.github/workflows/run_cli_on_repo_list.yml@main
       with:
         dataset-list: ${{ needs.get-repos.outputs.dataset_list }}
       secrets: inherit

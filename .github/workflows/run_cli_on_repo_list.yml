@@ -21,7 +21,7 @@ jobs:
         uses: actions/checkout@v4
         # NOTE: A token is needed if you want to git push to a repo
         with:
-          ref: 'add-cli-runner-wf'
+          ref: 'main'
           token: ${{ secrets.ON_WF_PAT }}
       
       # git-annex is required for datalad
@@ -75,7 +75,7 @@ jobs:
             git config user.email "<>"
             git add code/sha.txt
             git commit -m "[bot] Update record of repo SHAs"
-            git push origin add-cli-runner-wf
+            git push origin main
           fi
 
   push-updated-files:
