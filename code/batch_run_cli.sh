@@ -14,11 +14,12 @@ for dataset in $(cat $dataset_list_path); do
     # If the CLI did not run successfully, exit loop without updating SHA
     if [ $? -eq 0 ]; then
         # Replace the old SHA with the new one
-        echo "${repo}: Updating SHA in file"
-        line=$(grep "$repo" sha.txt)
+        echo "${repo}: CLI ran successfully!"
 
+        line=$(grep "$repo" sha.txt)
         # TODO: Remove this section? Prevents wf from exiting if the repo does not already exist in sha.txt (sed error)
         if [ ! -z "$line" ]; then
+            echo "${repo}: Updating SHA in file"
             sed -i "s/${line}/${repo},${sha}/" sha.txt
         else
             echo "${repo}: SHA not found, writing latest SHA to file"
