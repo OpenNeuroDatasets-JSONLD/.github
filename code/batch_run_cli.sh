@@ -20,7 +20,8 @@ for dataset in $(cat $dataset_list_path); do
         echo "${repo}: CLI ran successfully!"
 
         line=$(grep "$repo" sha.txt)
-        # TODO: Remove this section? Prevents wf from exiting if the repo does not already exist in sha.txt (sed error)
+        # TODO: Check if we need this section?
+        # Prevents wf from exiting if the repo does not already exist in sha.txt (sed error)
         if [ ! -z "$line" ]; then
             echo "${repo}: Updating SHA in file"
             sed -i "s/${line}/${repo},${sha}/" sha.txt
