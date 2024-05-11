@@ -15,6 +15,29 @@ nRepos=10
 # We need to add 1 to num of repos b/c by default .github will always be first in the list
 reposON_LD=$(gh repo list "$OWNER" --limit $((nRepos+1)) --json name --jq '.[].name' | grep -v ".github")
 
+do_cli_pheno_files_exist() {
+    local repo=$1
+    # Check if participants.tsv exists
+    local participant_tsv_response=$(curl -s -o /dev/null -w "%{http_code}" \
+    -H "Accept: application/vnd.github+json" \
+    -H "Authorization: Bearer ${GH_TOKEN}" \
+    -H "X-GitHub-Api-Version: 2022-11-28" \
+    https://api.github.com/repos/${OWNER}/${repo}/contents/participants.tsv)
+
+    # check if participants.json exists
+    local participant_json_response=$(curl -s -o /dev/null -w "%{http_code}" \
+    -H "Accept: application/vnd.github+json" \
+    -H "Authorization: Bearer ${GH_TOKEN}" \
+    -H "X-GitHub-Api-Version: 2022-11-28" \
+    https://api.github.com/repos/${OWNER}/${repo}/contents/participants.json)
+
+    if (( ($participant_tsv_response >= 200 && $participant_tsv_response < 300 ) && ($participant_json_response >= 200 && $participant_json_response < 300 ) )); then
+        echo true
+    else
+        echo false
+    fi
+}
+
 # Make empty file to keep track of repos that have changed
 touch changed_repos.txt
 for repo in $reposON_LD; do
@@ -35,33 +58,29 @@ for repo in $reposON_LD; do
         old_sha=$(echo $line | cut -d, -f2)
         # if the SHA is not the same as the old one
         if [ $old_sha != "$sha" ]; then
-            # check if participants.tsv exists
             echo "${repo}: latest SHA is different than existing SHA"
-            participant_tsv_http_code=$(curl -s -o /dev/null -w "%{http_code}" \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${GH_TOKEN}" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            https://api.github.com/repos/${OWNER}/${repo}/contents/participants.tsv)
-
-            # check if participants.json exists
-            participant_json_http_code=$(curl -s -o /dev/null -w "%{http_code}" \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${GH_TOKEN}" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            https://api.github.com/repos/${OWNER}/${repo}/contents/participants.json)
-
-            if (( ($participant_tsv_http_code > 200 || $participant_tsv_http_code < 300 ) && ($participant_json_http_code > 200 || $participant_json_http_code < 300 ))); then
+            if do_cli_pheno_files_exist $repo == true; then
                 # Add repo ID and current SHA of repo to a list of datasets to run the CLI on
+                echo "${repo}: Adding to job list for CLI"
                 echo $repo,$sha >> changed_repos.txt
             else
                 # If files needed for CLI not found, simply replace the old SHA with the new one
+                echo "${repo}: participants.json and/or participants.tsv not found"
                 echo "${repo}: Updating SHA in file"
                 sed -i "s/${line}/${repo},${sha}/" sha.txt
             fi
         fi   
-    # If repo not found in file, write current SHA to file
+    # If repo not found in file, write current SHA to file 
+    # and add repo to list of datasets to run the CLI on, if the files needed for the CLI are found
     else
-        echo "${repo}: SHA not found, writing latest SHA to file"
+        echo "${repo}: SHA not found"
+        
+        if do_cli_pheno_files_exist $repo == true; then
+            echo "${repo}: Adding to job list for CLI"
+            echo $repo,$sha >> changed_repos.txt
+        fi
+
+        echo "${repo}: Writing latest SHA to file"
         echo $repo,$sha >> sha.txt
     fi
 done
