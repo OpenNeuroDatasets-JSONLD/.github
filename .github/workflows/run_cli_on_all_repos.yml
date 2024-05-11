@@ -25,11 +25,18 @@ jobs:
           env:
             GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           working-directory: code
-          # TODO: Replace hardcoded repos with commmand to fetch full list
           # NOTE: When a repo doesn't exist, the curl command complains confusingly: jq: error (at <stdin>:4): Cannot index object with number
           run: |
             OWNER="OpenNeuroDatasets-JSONLD"
-            reposON_LD="ds000001 ds000002 ds000003 ds000005 ds000006"
+
+            nRepos=$(gh api graphql -f query='{
+              organization(login: "'"${OWNER}"'" ) {
+                  repositories {
+                      totalCount
+                  }
+              }
+            }' | jq -r '.data.organization.repositories.totalCount')
+            reposON_LD=$(gh repo list "$OWNER" --limit $((nRepos+1)) --json name --jq '.[].name' | grep -v ".github")
 
             echo 'repos<<EOF' >> "$GITHUB_OUTPUT"
             for repo in $reposON_LD; do

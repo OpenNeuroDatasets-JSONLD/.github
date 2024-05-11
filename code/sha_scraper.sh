@@ -2,17 +2,17 @@
 
 OWNER="OpenNeuroDatasets-JSONLD"
 
-# TODO: Uncomment once we've confirmed that a few work
-# nRepos=$(gh api graphql -f query='{
-#     organization(login: "'"${OWNER}"'" ) {
-#         repositories {
-#             totalCount
-#         }
-#     }
-# }' | jq -r '.data.organization.repositories.totalCount')
+# TODO: Refactor out code to get list of repos in the organization, since we reuse this in run_cli_on_all_repos.yml
+nRepos=$(gh api graphql -f query='{
+    organization(login: "'"${OWNER}"'" ) {
+        repositories {
+            totalCount
+        }
+    }
+}' | jq -r '.data.organization.repositories.totalCount')
 # Return every repository name except .github (because that one is special)
-nRepos=10
-# We need to add 1 to num of repos b/c by default .github will always be first in the list
+# We also need to add 1 to number of repos to account for the .github repo
+# NOTE: The returned repo order will be in order of most recently created/updated
 reposON_LD=$(gh repo list "$OWNER" --limit $((nRepos+1)) --json name --jq '.[].name' | grep -v ".github")
 
 do_cli_pheno_files_exist() {
