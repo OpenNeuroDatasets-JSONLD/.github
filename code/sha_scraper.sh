@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# This script fetches all current repos in OpenNeuroDatasets-JSONLD and
+# checks if the SHA of the latest commit in each repo has changed.
+# If the SHA has changed, the script checks if participants.tsv and participants.json exist in the repo.
+# If both files exist, the repo ID and current SHA are added to a list of datasets to run the CLI on.
+# If a file needed for the CLI is not found, the script only updates the SHA in sha.txt without doing anything else.
+
 OWNER="OpenNeuroDatasets-JSONLD"
 
 # TODO: Refactor out code to get list of repos in the organization, since we reuse this in run_cli_on_all_repos.yml
