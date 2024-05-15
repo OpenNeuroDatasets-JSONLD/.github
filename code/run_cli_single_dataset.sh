@@ -12,7 +12,7 @@ ds_git="git@github.com:OpenNeuroDatasets-JSONLD/${ds_id}"
 
 ldin=data
 mkdir -p ${ldin}
-ldout=data/jsonld
+ldout=${ldin}/jsonld
 mkdir -p ${ldout}
 
 # NOTE: realpath is needed to get an absolute path of the directory for mounting, 
