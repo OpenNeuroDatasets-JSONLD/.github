@@ -34,12 +34,11 @@ jobs:
           #
           # Meanwhile, a repo whose SHA has changed but is missing required CLI files (TSV/JSON)
           # is directly updated in the sha.txt file without being added to changed_repos (i.e., we don't run the CLI on them).
-          # 
-          # We use syntax here to ensure that "repos" is a multiline string, where each line represents one repo
-          # See: https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#multiline-strings
           run: |
             ./sha_scraper.sh 2>&1 | tee -a LOG.txt
 
+            # The following syntax ensures that "changed_repos" is a multiline string, where each line represents one repo
+            # See: https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#multiline-strings
             echo 'changed_repos<<EOF' >> "$GITHUB_OUTPUT"
             for line in $(cat changed_repos.txt); do
               echo $line >> "$GITHUB_OUTPUT"

@@ -17,9 +17,6 @@ jobs:
 
         # This step gets a list of all repos in OpenNeuroDatasets-JSONLD, and fetches each repo's latest SHA
         # Each repo ID and its corresponding SHA are written to a job output variable "repos"
-        #
-        # We use syntax here to ensure that "repos" is a multiline string, where each line represents one repo
-        # See: https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#multiline-strings
         - id: get-repos
           name: Get repos
           env:
@@ -38,6 +35,8 @@ jobs:
             }' | jq -r '.data.organization.repositories.totalCount')
             reposON_LD=$(gh repo list "$OWNER" --limit $((nRepos+1)) --json name --jq '.[].name' | grep -v ".github")
 
+            # The following syntax ensures that "repos" is a multiline string, where each line represents one repo
+            # See: https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#multiline-strings
             echo 'repos<<EOF' >> "$GITHUB_OUTPUT"
             for repo in $reposON_LD; do
               sha=$(curl -L \

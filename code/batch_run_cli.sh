@@ -18,17 +18,18 @@ for dataset in $(cat $dataset_list_path); do
     if [ $? -eq 0 ]; then
         echo "${repo}: CLI ran successfully!"
 
-        line=$(grep "$repo" sha.txt)
+        # Look for an existing SHA for the repo in sha.txt
+        old_repo_sha=$(grep "$repo" sha.txt)
 
-        # The following section updates SHAs in sha.txt and is similar to code in sha_scraper.sh.
-        # The goal is, for a repo that has *successfully run the CLI*, make sure we now record their most up to date SHA
+        # The following section is similar to code in sha_scraper.sh but updates SHAs in sha.txt for a different set of repos
+        # Essentially, for a repo that has *successfully run the CLI*, make sure we now record their most up to date SHA
         # (i.e., to indicate when the last successful CLI run happened).
         # To achieve this:
         # - if the repo DOES already have an entry in sha.txt, we replace (update) the existing SHA with the current SHA
         # - if the repo DOES NOT already have an entry in sha.txt (meaning this is a newly added repo), add the repo and its SHA
-        if [ ! -z "$line" ]; then
+        if [ ! -z "$old_repo_sha" ]; then
             echo "${repo}: Updating SHA in file"
-            sed -i "s/${line}/${repo},${sha}/" sha.txt
+            sed -i "s/${old_repo_sha}/${repo},${sha}/" sha.txt
         else
             echo "${repo}: SHA not found, writing latest SHA to file"
             echo $repo,$sha >> sha.txt
