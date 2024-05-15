@@ -16,10 +16,9 @@ nRepos=$(gh api graphql -f query='{
         }
     }
 }' | jq -r '.data.organization.repositories.totalCount')
-# Return every repository name except .github (because that one is special)
-# We also need to add 1 to number of repos to account for the .github repo
+# Return every repository fork name (excluding .github)
 # NOTE: The returned repo order will be in order of most recently created/updated
-reposON_LD=$(gh repo list "$OWNER" --limit $((nRepos+1)) --json name --jq '.[].name' | grep -v ".github")
+reposON_LD=$(gh repo list "$OWNER" --fork --limit ${nRepos} --json name --jq '.[].name')
 
 do_cli_pheno_files_exist() {
     local repo=$1

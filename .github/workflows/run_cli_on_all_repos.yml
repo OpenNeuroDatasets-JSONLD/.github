@@ -33,7 +33,7 @@ jobs:
                   }
               }
             }' | jq -r '.data.organization.repositories.totalCount')
-            reposON_LD=$(gh repo list "$OWNER" --limit $((nRepos+1)) --json name --jq '.[].name' | grep -v ".github")
+            reposON_LD=$(gh repo list "$OWNER" --fork --limit ${nRepos} --json name --jq '.[].name')
 
             # The following syntax ensures that "repos" is a multiline string, where each line represents one repo
             # See: https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#multiline-strings
