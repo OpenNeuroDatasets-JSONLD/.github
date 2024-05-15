@@ -1,0 +1,56 @@
+# This workflow only runs when manually triggered, and calls a reusable workflow to run the CLI on all repos in OpenNeuroDatasets-JSONLD.
+name: Run CLI on all repos
+
+on:
+  workflow_dispatch:
+
+jobs:
+    get-repos:
+      name: Get repos
+      runs-on: ubuntu-latest
+      outputs:
+        dataset_list: ${{ steps.get-repos.outputs.repos }}
+
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+
+        # This step gets a list of all repos in OpenNeuroDatasets-JSONLD, and fetches each repo's latest SHA
+        # Each repo ID and its corresponding SHA are written to a job output variable "repos"
+        - id: get-repos
+          name: Get repos
+          env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          working-directory: code
+          # NOTE: When a repo doesn't exist, the curl command complains confusingly: jq: error (at <stdin>:4): Cannot index object with number
+          run: |
+            OWNER="OpenNeuroDatasets-JSONLD"
+
+            nRepos=$(gh api graphql -f query='{
+              organization(login: "'"${OWNER}"'" ) {
+                  repositories {
+                      totalCount
+                  }
+              }
+            }' | jq -r '.data.organization.repositories.totalCount')
+            reposON_LD=$(gh repo list "$OWNER" --fork --limit ${nRepos} --json name --jq '.[].name')
+
+            # The following syntax ensures that "repos" is a multiline string, where each line represents one repo
+            # See: https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#multiline-strings
+            echo 'repos<<EOF' >> "$GITHUB_OUTPUT"
+            for repo in $reposON_LD; do
+              sha=$(curl -L \
+                -H "Accept: application/vnd.github+json" \
+                -H "Authorization: Bearer ${GH_TOKEN}" \
+                -H "X-GitHub-Api-Version: 2022-11-28" \
+                https://api.github.com/repos/${OWNER}/${repo}/commits | jq .[0].sha)
+              echo $repo,$sha >> "$GITHUB_OUTPUT"
+            done
+            echo 'EOF' >> "$GITHUB_OUTPUT"
+
+    call-run-cli-on-repo-list:
+      needs: get-repos
+      uses: OpenNeuroDatasets-JSONLD/.github/workflows/run_cli_on_repo_list.yml@main
+      with:
+        dataset-list: ${{ needs.get-repos.outputs.dataset_list }}
+      secrets: inherit

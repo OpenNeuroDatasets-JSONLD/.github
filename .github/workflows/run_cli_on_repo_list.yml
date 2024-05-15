@@ -1,0 +1,120 @@
+# This is a reusable workflow that runs the CLI on a provided list of repos, 
+# and uploads the JSONLD files along with the CLI log to a branch in neurobagel/openneuro-annotations.
+# The workflow updates the sha.txt file for repos on which the CLI ran successfully.
+name: Run CLI on repo list
+
+on:
+  workflow_call:
+    inputs:
+      # NOTE: If this input is empty, the workflow should not run
+      dataset-list:
+        description: "String representing a list of repos to update"
+        required: true
+        type: string
+
+jobs:
+  batch-run-cli:
+    name: Batch run CLI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        # NOTE: A token is needed if you want to git push to a repo
+        with:
+          ref: 'main'
+          token: ${{ secrets.ON_WF_PAT }}
+      
+      # git-annex is required for datalad
+      # Also setting author info here for Git to suppress datalad warnings
+      - name: Install git-annex
+        run: |
+          sudo apt-get update
+          sudo apt-get install git-annex
+          echo "git-annex version: $(git-annex version)"
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "<>"
+
+      # TODO: Cache Python dependencies
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r code/requirements.txt
+
+      - name: Run CLI
+        working-directory: code
+        # Passing input as a file to avoid issues with multiline strings
+        # NOTE: This step also removes the quotes in dataset-list (we add these back inside batch_run_cli.sh)
+        run: |
+          echo "${{ inputs.dataset-list }}" > dataset_list.txt
+          ./batch_run_cli.sh dataset_list.txt 2>&1 | tee -a LOG.txt
+      
+      # TODO: If this gets too slow, try https://github.com/actions/cache
+      - name: Upload JSONLD files as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: jsonld-files
+          path: code/data/jsonld
+          # TODO: Add a retention policy to delete old artifacts
+
+      - name: Upload log file as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cli-log-file
+          path: code/LOG.txt
+
+      - name: Commit and push updated sha.txt file
+        # If sha.txt was not updated (i.e., all datasets failed?), skip this step
+        run: |
+          # git diff --quiet silences the output and returns 0 if there are no modifications, or 1 if there are modifications
+          # 0 is considered "true" in bash, so we negate the condition to have it only evaluate to true if there are differences
+          if ! git diff --quiet code/sha.txt; then
+            git config user.name "GitHub Actions Bot"
+            git config user.email "<>"
+            git add code/sha.txt
+            git commit -m "[bot] Update record of repo SHAs"
+            git push origin main
+          fi
+
+  push-updated-files:
+    name: Push updated JSONLD files
+    runs-on: ubuntu-latest
+    needs: batch-run-cli
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          repository: 'neurobagel/openneuro-annotations'
+          ref: 'auto-update-jsonlds'
+          token: ${{ secrets.NB_OPENNEURO_ANNOTATIONS_RW }}
+
+      - name: Clear existing jsonld files
+        run: rm -f jsonld/*
+
+      - name: Download JSONLD files artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: jsonld-files
+          path: jsonld
+
+      - name: Download CLI log artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cli-log-file
+          # NOTE: Path must be a directory, not a file
+          path: jsonld
+
+      # Since we're using git commands, should also prevent empty commits
+      - name: Commit and push updated JSONLD files
+        # TODO: If there are no JSONLD files to update, skip this step
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "<>"
+          git add -A jsonld/*
+          git commit -m "[bot] Update JSONLD files and CLI log"
+          git push origin auto-update-jsonlds

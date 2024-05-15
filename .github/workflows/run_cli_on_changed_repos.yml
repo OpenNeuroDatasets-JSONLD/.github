@@ -1,0 +1,73 @@
+# This workflow runs on a schedule and when manually triggered. It checks for changes to the OpenNeuroDatasets-JSONLD repos, 
+# and calls a reusable workflow to run the CLI on repos that have changed *or* are new.
+# The workflow directly updates the sha.txt file for repos whose SHAs have changed but are missing required files for the CLI.
+name: Run CLI on changed repos
+
+on:
+  schedule:
+    - cron: '31 12,0 * * *'
+  workflow_dispatch:
+
+jobs:
+    get-updated-files:
+      name: Get updated JSONLD files
+      runs-on: ubuntu-latest
+      # See https://docs.github.com/en/actions/using-jobs/defining-outputs-for-jobs
+      outputs:
+        dataset_list: ${{ steps.detect-changed-repos.outputs.changed_repos }}
+
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+
+        - id: detect-changed-repos
+          name: Detect changed repos
+          env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          working-directory: code
+          # This step runs a script that gets a list of all repos in OpenNeuroDatasets-JSONLD, and fetches each repo's latest SHA.
+          # The latest repo SHAs are then compared to the recorded SHAs in code/sha.txt,
+          # and each repo that (1) either has a different SHA or has no entry in sha.txt (a new fork) *AND* (2) has the required files for the CLI are written to a job output variable "changed_repos"
+          # to form the list that the CLI will run on.
+          # Repos added to the changed_repos list are essentially 'queued up' for the CLI, 
+          # so we skip updating (or not) their sha.txt entries here until after we see the outcome of their CLI run (not in this workflow).
+          #
+          # Meanwhile, a repo whose SHA has changed but is missing required CLI files (TSV/JSON)
+          # is directly updated in the sha.txt file without being added to changed_repos (i.e., we don't run the CLI on them).
+          run: |
+            ./sha_scraper.sh 2>&1 | tee -a LOG.txt
+
+            # The following syntax ensures that "changed_repos" is a multiline string, where each line represents one repo
+            # See: https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#multiline-strings
+            echo 'changed_repos<<EOF' >> "$GITHUB_OUTPUT"
+            for line in $(cat changed_repos.txt); do
+              echo $line >> "$GITHUB_OUTPUT"
+            done
+            echo 'EOF' >> "$GITHUB_OUTPUT"
+        
+        # TODO: Push LOG.txt to .github repo?
+        - name: Upload log file as artifact
+          uses: actions/upload-artifact@v4
+          with:
+            name: log-file
+            path: code/LOG.txt
+
+        - name: Commit and push updated sha.txt file
+          # NOTE: git push only has access to whatever branch is currently checked out
+          run: |
+            if ! git diff --quiet code/sha.txt; then
+              git config user.name "GitHub Actions Bot"
+              git config user.email "<>"
+              git add code/sha.txt
+              git commit -m "[bot] Update record of repo SHAs"
+              git push origin main
+            fi
+
+    call-run-cli-on-repo-list:
+      needs: get-updated-files
+      # Only run this job if the list of changed repos is not empty
+      if: ${{ needs.get-updated-files.outputs.dataset_list != '' }}
+      uses: OpenNeuroDatasets-JSONLD/.github/workflows/run_cli_on_repo_list.yml@main
+      with:
+        dataset-list: ${{ needs.get-updated-files.outputs.dataset_list }}
+      secrets: inherit
