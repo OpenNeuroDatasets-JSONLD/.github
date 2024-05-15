@@ -1,4 +1,8 @@
-"""Fetch and print the name of a BIDS dataset."""
+"""
+Fetch and print the name of a BIDS dataset.
+
+NOTE: This script is currently not used by any workflow. It is included here for reference purposes.
+"""
 
 from pathlib import Path
 

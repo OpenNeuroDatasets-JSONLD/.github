@@ -26,8 +26,20 @@ datalad get -d $workdir "${workdir}/participants.json"
 datalad get -d $workdir "${workdir}/dataset_description.json"
 
 # Get the dataset label
-ds_name=$(python extract_bids_dataset_name.py --ds $workdir)
-if [ "$ds_name" == "None" ] ; then ds_name=$ds_id ; else ds_name=$ds_name ; fi
+ds_name=$(cat ${workdir}/dataset_description.json 2>/dev/null | jq .Name)
+
+# Strip the leading and trailing quotes (") from the ds_name, which are preserved by default when using jq
+ds_name=${ds_name#\"}
+ds_name=${ds_name%\"}
+
+# Catches the cases where:
+# - the dataset_description.json does not exist
+# - the "Name" field does not exist
+# - the "Name" field is an empty string "" or contains only whitespace characters (spaces, tabs, newlines, such as " ")
+# and sets the dataset name to the dataset ID in those cases
+if [ -z "$ds_name" ] || [ "$ds_name" == "null" ] || [[ "$ds_name" =~ ^[[:space:]]*$ ]]; then
+    ds_name=$ds_id
+fi
 
 # Run the Neurobagel CLI
 docker run --rm -v ${workdir}:${workdir} neurobagel/bagelcli pheno --pheno ${workdir}/participants.tsv --dictionary ${workdir}/participants.json --output ${workdir}/pheno.jsonld --name "$ds_name" --portal $ds_portal

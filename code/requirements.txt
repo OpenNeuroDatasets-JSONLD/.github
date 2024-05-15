@@ -1,8 +1,1 @@
-rich
 datalad
-pandas
-pandas-stubs
-pybids
-pytest
-typer
-jsonschema
