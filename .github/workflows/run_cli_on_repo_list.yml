@@ -70,6 +70,8 @@ jobs:
       - name: Commit and push updated sha.txt file
         # If sha.txt was not updated (i.e., all datasets failed?), skip this step
         run: |
+          # git diff --quiet silences the output and returns 0 if there are no modifications, or 1 if there are modifications
+          # 0 is considered "true" in bash, so we negate the condition to have it only evaluate to true if there are differences
           if ! git diff --quiet code/sha.txt; then
             git config user.name "GitHub Actions Bot"
             git config user.email "<>"
