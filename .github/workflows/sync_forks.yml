@@ -10,9 +10,17 @@ jobs:
     name: Sync Forks
     runs-on: ubuntu-latest
     steps:
+      - name: Generate a token
+        id: generate-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.NB_BOT_ID }}
+          private-key: ${{ secrets.NB_BOT_KEY }}
+          owner: ${{ github.repository_owner }}
+
       - name: Sync Forks
         env:
-          GH_TOKEN: ${{ secrets.ON_WF_PAT }}
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
         run: |
           nRepos=$(gh api graphql -f query='{
             organization(login: "OpenNeuroDatasets-JSONLD" ) {
