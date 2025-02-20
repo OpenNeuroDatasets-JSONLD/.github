@@ -67,7 +67,7 @@ jobs:
       needs: get-updated-files
       # Only run this job if the list of changed repos is not empty
       if: ${{ needs.get-updated-files.outputs.dataset_list != '' }}
-      uses: OpenNeuroDatasets-JSONLD/.github/workflows/run_cli_on_repo_list.yml@main
+      uses: OpenNeuroDatasets-JSONLD/.github/.github/workflows/run_cli_on_repo_list.yml@main
       with:
         dataset-list: ${{ needs.get-updated-files.outputs.dataset_list }}
       secrets: inherit
