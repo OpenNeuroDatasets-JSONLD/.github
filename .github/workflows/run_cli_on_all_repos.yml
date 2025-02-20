@@ -50,7 +50,7 @@ jobs:
 
     call-run-cli-on-repo-list:
       needs: get-repos
-      uses: OpenNeuroDatasets-JSONLD/.github/workflows/run_cli_on_repo_list.yml@main
+      uses: OpenNeuroDatasets-JSONLD/.github/.github/workflows/run_cli_on_repo_list.yml@main
       with:
         dataset-list: ${{ needs.get-repos.outputs.dataset_list }}
       secrets: inherit
