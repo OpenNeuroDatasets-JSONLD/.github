@@ -40,5 +40,5 @@ fi
 
 # Run the Neurobagel CLI
 bagel pheno --pheno ${workdir}/participants.tsv --dictionary ${workdir}/participants.json --output ${workdir}/pheno.jsonld --name "$ds_name" --portal $ds_portal
-bagel bids --jsonld-path ${workdir}/pheno.jsonld  --bids-dir ${workdir} --output ${workdir}/pheno_bids.jsonld
+bagel bids --jsonld-path ${workdir}/pheno.jsonld  --input-bids-dir ${workdir} --source-bids-dir ${workdir} --output ${workdir}/pheno_bids.jsonld
 cp ${workdir}/pheno_bids.jsonld ${out}
