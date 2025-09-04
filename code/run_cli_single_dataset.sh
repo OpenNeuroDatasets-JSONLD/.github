@@ -4,7 +4,7 @@
 
 ds_id=$1
 
-docker pull neurobagel/bagelcli:latest
+docker pull neurobagel/bagelcli:v0.6.0
 
 # Get the data
 ds_portal="https://github.com/OpenNeuroDatasets-JSONLD/${ds_id}.git"
