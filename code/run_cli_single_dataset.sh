@@ -42,6 +42,6 @@ if [ -z "$ds_name" ] || [ "$ds_name" == "null" ] || [[ "$ds_name" =~ ^[[:space:]
 fi
 
 # Run the Neurobagel CLI
-docker run --rm -v ${workdir}:${workdir} neurobagel/bagelcli pheno --pheno ${workdir}/participants.tsv --dictionary ${workdir}/participants.json --output ${workdir}/pheno.jsonld --name "$ds_name" --portal $ds_portal
-docker run --rm -v ${workdir}:${workdir} neurobagel/bagelcli bids --jsonld-path ${workdir}/pheno.jsonld  --bids-dir ${workdir} --output ${workdir}/pheno_bids.jsonld
+docker run --rm -v ${workdir}:${workdir} neurobagel/bagelcli:v0.6.0 pheno --pheno ${workdir}/participants.tsv --dictionary ${workdir}/participants.json --output ${workdir}/pheno.jsonld --name "$ds_name" --portal $ds_portal
+docker run --rm -v ${workdir}:${workdir} neurobagel/bagelcli:v0.6.0 bids --jsonld-path ${workdir}/pheno.jsonld  --bids-dir ${workdir} --output ${workdir}/pheno_bids.jsonld
 cp ${workdir}/pheno_bids.jsonld ${out}
