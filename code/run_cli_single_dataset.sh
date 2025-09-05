@@ -4,8 +4,6 @@
 
 ds_id=$1
 
-docker pull neurobagel/bagelcli:v0.6.0
-
 # Get the data
 ds_portal="https://github.com/OpenNeuroDatasets-JSONLD/${ds_id}.git"
 ds_git="git@github.com:OpenNeuroDatasets-JSONLD/${ds_id}"
@@ -15,8 +13,7 @@ mkdir -p ${ldin}
 ldout=${ldin}/jsonld
 mkdir -p ${ldout}
 
-# NOTE: realpath is needed to get an absolute path of the directory for mounting, 
-# otherwise Docker will error out at the mount step
+# NOTE: realpath is used to get an absolute path of the directory
 workdir=$(realpath ${ldin}/${ds_id})
 out="${ldout}/${ds_id}.jsonld"
 
@@ -42,6 +39,6 @@ if [ -z "$ds_name" ] || [ "$ds_name" == "null" ] || [[ "$ds_name" =~ ^[[:space:]
 fi
 
 # Run the Neurobagel CLI
-docker run --rm -v ${workdir}:${workdir} neurobagel/bagelcli:v0.6.0 pheno --pheno ${workdir}/participants.tsv --dictionary ${workdir}/participants.json --output ${workdir}/pheno.jsonld --name "$ds_name" --portal $ds_portal
-docker run --rm -v ${workdir}:${workdir} neurobagel/bagelcli:v0.6.0 bids --jsonld-path ${workdir}/pheno.jsonld  --bids-dir ${workdir} --output ${workdir}/pheno_bids.jsonld
+bagel pheno --pheno ${workdir}/participants.tsv --dictionary ${workdir}/participants.json --output ${workdir}/pheno.jsonld --name "$ds_name" --portal $ds_portal
+bagel bids --jsonld-path ${workdir}/pheno.jsonld  --input-bids-dir ${workdir} --source-bids-dir ${workdir} --output ${workdir}/pheno_bids.jsonld
 cp ${workdir}/pheno_bids.jsonld ${out}
