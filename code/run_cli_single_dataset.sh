@@ -15,7 +15,7 @@ mkdir -p ${ldout}
 
 # NOTE: realpath is used to get an absolute path of the directory
 workdir=$(realpath ${ldin}/${ds_id})
-out="${ldout}/${ds_id}.jsonld"
+out_jsonld_path="${ldout}/${ds_id}.jsonld"
 
 datalad clone ${ds_portal} ${workdir}
 datalad get -d $workdir "${workdir}/participants.tsv"
@@ -39,6 +39,19 @@ if [ -z "$ds_name" ] || [ "$ds_name" == "null" ] || [[ "$ds_name" =~ ^[[:space:]
 fi
 
 # Run the Neurobagel CLI
-bagel pheno --pheno ${workdir}/participants.tsv --dictionary ${workdir}/participants.json --output ${workdir}/pheno.jsonld --name "$ds_name" --portal $ds_portal
-bagel bids --jsonld-path ${workdir}/pheno.jsonld  --input-bids-dir ${workdir} --source-bids-dir ${workdir} --output ${workdir}/pheno_bids.jsonld
-cp ${workdir}/pheno_bids.jsonld ${out}
+bagel pheno \
+    --pheno ${workdir}/participants.tsv \
+    --dictionary ${workdir}/participants.json \
+    --output ${workdir}/pheno.jsonld \
+    --name "$ds_name" \
+    --portal $ds_portal
+
+bagel bids2tsv --bids-dir ${workdir} --output ${workdir}/bids.tsv
+
+bagel bids \
+    --jsonld-path ${workdir}/pheno.jsonld \
+    --bids-table ${workdir}/bids.tsv \
+    --dataset-source-dir "/${ds_id}" \  # dataget expects OpenNeuro imaging session paths to be in the format /dsXXXX/sub-XXX/ses-XXX
+    --output ${workdir}/pheno_bids.jsonld
+
+cp ${workdir}/pheno_bids.jsonld ${out_jsonld_path}
