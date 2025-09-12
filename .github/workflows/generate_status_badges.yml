@@ -1,0 +1,236 @@
+# This workflow generates status badges for each dataset/matrix job
+# It runs after the CLI workflow completes and creates individual badges
+name: Generate Status Badges
+
+on:
+  workflow_run:
+    workflows: ["Run CLI on repo list"]
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      force_update:
+        description: 'Force update all badges'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  generate-badges:
+    name: Generate Status Badges
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate a token
+        id: generate-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.NB_BOT_ID }}
+          private-key: ${{ secrets.NB_BOT_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.generate-token.outputs.token }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Get workflow run details
+        id: workflow-info
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+        run: |
+          # Get the latest workflow run for "Run CLI on repo list"
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            RUN_ID="${{ github.event.workflow_run.id }}"
+          else
+            # Get the most recent workflow run
+            RUN_ID=$(gh api repos/${{ github.repository }}/actions/workflows/run_cli_on_repo_list.yml/runs \
+              --jq '.workflow_runs[0].id')
+          fi
+          
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+          
+          # Get job details for the workflow run
+          gh api repos/${{ github.repository }}/actions/runs/$RUN_ID/jobs \
+            --jq '.jobs[] | select(.name | startswith("Run CLI on ")) | {name: .name, status: .status, conclusion: .conclusion}' \
+            > jobs.json
+
+      - name: Generate badge data
+        id: badge-data
+        run: |
+          python3 << 'EOF'
+          import json
+          import os
+          
+          # Read job data
+          with open('jobs.json', 'r') as f:
+              jobs_data = [json.loads(line.strip()) for line in f if line.strip()]
+          
+          badges = []
+          for job in jobs_data:
+              # Extract dataset name from job name (format: "Run CLI on dataset_name")
+              dataset_name = job['name'].replace('Run CLI on ', '')
+              
+              # Determine badge color and status
+              if job['conclusion'] == 'success':
+                  status = 'passing'
+                  color = 'brightgreen'
+              elif job['conclusion'] == 'failure':
+                  status = 'failing'
+                  color = 'red'
+              elif job['conclusion'] == 'cancelled':
+                  status = 'cancelled'
+                  color = 'yellow'
+              elif job['status'] == 'in_progress':
+                  status = 'running'
+                  color = 'blue'
+              else:
+                  status = 'unknown'
+                  color = 'lightgrey'
+              
+              badges.append({
+                  'dataset': dataset_name,
+                  'status': status,
+                  'color': color,
+                  'conclusion': job['conclusion']
+              })
+          
+          # Write badges data to file
+          with open('badges.json', 'w') as f:
+              json.dump(badges, f, indent=2)
+          
+          print(f"Generated {len(badges)} badges")
+          EOF
+
+      - name: Create badge directory
+        run: |
+          mkdir -p badges
+
+      - name: Generate individual badge files
+        run: |
+          python3 << 'EOF'
+          import json
+          import urllib.parse
+          import os
+          
+          with open('badges.json', 'r') as f:
+              badges = json.load(f)
+          
+          # Generate individual badge URLs and markdown
+          badge_urls = []
+          badge_markdown = []
+          
+          for badge in badges:
+              dataset = badge['dataset']
+              status = badge['status']
+              color = badge['color']
+              
+              # URL encode the dataset name for the badge
+              encoded_dataset = urllib.parse.quote(dataset)
+              encoded_status = urllib.parse.quote(status)
+              
+              # Generate shields.io badge URL
+              badge_url = f"https://img.shields.io/badge/{encoded_dataset}-{encoded_status}-{color}"
+              
+              # Create individual badge files
+              with open(f'badges/{dataset}.json', 'w') as f:
+                  json.dump({
+                      'dataset': dataset,
+                      'status': status,
+                      'color': color,
+                      'badge_url': badge_url,
+                      'conclusion': badge['conclusion']
+                  }, f, indent=2)
+              
+              badge_urls.append(badge_url)
+              badge_markdown.append(f"![{dataset}]({badge_url})")
+          
+          # Create consolidated badge list
+          with open('badges/all_badges.md', 'w') as f:
+              f.write("# Dataset Processing Status Badges\n\n")
+              f.write(f"Generated: {os.popen('date').read().strip()}\n\n")
+              
+              # Sort badges by status (success first, then failures)
+              sorted_badges = sorted(badges, key=lambda x: (x['status'] != 'passing', x['dataset']))
+              
+              f.write("## Status Overview\n\n")
+              for i, badge in enumerate(sorted_badges):
+                  dataset = badge['dataset']
+                  status = badge['status']
+                  color = badge['color']
+                  badge_url = f"https://img.shields.io/badge/{urllib.parse.quote(dataset)}-{urllib.parse.quote(status)}-{color}"
+                  f.write(f"[![{dataset}]({badge_url})](https://github.com/{os.environ.get('GITHUB_REPOSITORY', '')}/actions/workflows/run_cli_on_repo_list.yml) ")
+                  
+                  # Add line break every 5 badges for better readability
+                  if (i + 1) % 5 == 0:
+                      f.write("\n\n")
+              
+              f.write("\n\n## Badge Usage\n\n")
+              f.write("To use individual badges in your documentation:\n\n")
+              f.write("```markdown\n")
+              for badge in sorted_badges[:3]:  # Show first 3 as examples
+                  dataset = badge['dataset']
+                  status = badge['status']
+                  color = badge['color']
+                  badge_url = f"https://img.shields.io/badge/{urllib.parse.quote(dataset)}-{urllib.parse.quote(status)}-{color}"
+                  f.write(f"![{dataset}]({badge_url})\n")
+              f.write("```\n")
+          
+          print(f"Generated badge files for {len(badges)} datasets")
+          EOF
+
+      - name: Update README with badges
+        run: |
+          # Create or update badges section in profile README
+          PROFILE_README="/home/runner/work/.github/.github/profile/README.md"
+          
+          if [ ! -f "$PROFILE_README" ]; then
+            echo "Profile README not found, skipping update"
+            exit 0
+          fi
+          
+          # Check if badges section exists
+          if grep -q "## Dataset Status Badges" "$PROFILE_README"; then
+            # Remove existing badges section
+            sed -i '/## Dataset Status Badges/,$d' "$PROFILE_README"
+          fi
+          
+          # Add new badges section
+          echo "" >> "$PROFILE_README"
+          echo "## Dataset Status Badges" >> "$PROFILE_README"
+          echo "" >> "$PROFILE_README"
+          echo "Individual status badges for each dataset processing job:" >> "$PROFILE_README"
+          echo "" >> "$PROFILE_README"
+          
+          # Add badges from the generated file (excluding the header)
+          tail -n +4 badges/all_badges.md >> "$PROFILE_README"
+
+      - name: Commit and push badge files
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "<>"
+          
+          git add badges/
+          git add profile/README.md || true
+          
+          if ! git diff --quiet --cached; then
+            git commit -m "[bot] Update dataset status badges"
+            git push origin main
+          else
+            echo "No changes to commit"
+          fi
+
+      - name: Upload badge artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: status-badges
+          path: badges/

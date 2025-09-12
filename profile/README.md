@@ -11,3 +11,4 @@ DataLad is a free and open source distributed data management system that keeps 
 - :postbox: [OpenNeuroDatasets](https://github.com/OpenNeuroDatasets) the origin of augmentation
 - :computer: [con/job](https://github.com/con/job) to automate updating the dataset forks
 - :blue_book: [data dictionary schema](https://neurobagel.org/data_models/dictionaries/)
+- :chart_with_upwards_trend: [Dataset Status Badges](../badge_status.md) individual processing status for each dataset

@@ -13,9 +13,27 @@ on:
         type: string
 
 jobs:
-  batch-run-cli:
-    name: Batch run CLI
+  parse-datasets:
+    name: Parse dataset list
     runs-on: ubuntu-latest
+    outputs:
+      datasets: ${{ steps.parse.outputs.datasets }}
+    steps:
+      - name: Parse dataset list into matrix
+        id: parse
+        run: |
+          # Convert the multiline dataset list into a JSON array for matrix strategy
+          echo "${{ inputs.dataset-list }}" | jq -R -s -c 'split("\n") | map(select(length > 0))' > datasets.json
+          echo "datasets=$(cat datasets.json)" >> "$GITHUB_OUTPUT"
+
+  matrix-run-cli:
+    name: Run CLI on ${{ matrix.dataset }}
+    needs: parse-datasets
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dataset: ${{ fromJson(needs.parse-datasets.outputs.datasets) }}
     steps:
       - name: Generate a token
         id: generate-token
@@ -27,13 +45,11 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v4
-        # NOTE: A token is needed if you want to git push to a repo
         with:
           ref: 'main'
           token: ${{ steps.generate-token.outputs.token }}
       
       # git-annex is required for datalad
-      # Also setting author info here for Git to suppress datalad warnings
       - name: Install git-annex
         run: |
           sudo apt-get update
@@ -42,7 +58,6 @@ jobs:
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "<>"
 
-      # TODO: Cache Python dependencies
       - name: Set up Python 3.10
         uses: actions/setup-python@v5
         with:
@@ -53,38 +68,126 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r code/requirements.txt
 
-      - name: Run CLI
-        working-directory: code
-        # Passing input as a file to avoid issues with multiline strings
-        # NOTE: This step also removes the quotes in dataset-list (we add these back inside batch_run_cli.sh)
+      - name: Extract dataset info
+        id: dataset-info
         run: |
-          echo "${{ inputs.dataset-list }}" > dataset_list.txt
-          ./batch_run_cli.sh dataset_list.txt 2>&1 | tee -a LOG.txt
-      
-      # TODO: If this gets too slow, try https://github.com/actions/cache
-      - name: Upload JSONLD files as artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: jsonld-files
-          path: code/data/jsonld
-          # TODO: Add a retention policy to delete old artifacts
+          # Extract repo name and SHA from the dataset string (format: repo,sha)
+          DATASET="${{ matrix.dataset }}"
+          REPO=$(echo "$DATASET" | cut -d ',' -f 1)
+          SHA=$(echo "$DATASET" | cut -d ',' -f 2 | tr -d '"')
+          echo "repo=$REPO" >> "$GITHUB_OUTPUT"
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
 
-      - name: Upload log file as artifact
+      - name: Run CLI on single dataset
+        id: run-cli
+        working-directory: code
+        run: |
+          REPO="${{ steps.dataset-info.outputs.repo }}"
+          echo "Running CLI on dataset: $REPO"
+          ./run_cli_single_dataset.sh "$REPO" 2>&1 | tee "LOG_${REPO}.txt"
+          
+          # Capture the exit status
+          CLI_EXIT_CODE=$?
+          echo "exit_code=$CLI_EXIT_CODE" >> "$GITHUB_OUTPUT"
+          
+          if [ $CLI_EXIT_CODE -eq 0 ]; then
+            echo "status=success" >> "$GITHUB_OUTPUT"
+            echo "✅ CLI succeeded for $REPO"
+          else
+            echo "status=failure" >> "$GITHUB_OUTPUT"
+            echo "❌ CLI failed for $REPO"
+            exit $CLI_EXIT_CODE
+          fi
+
+      - name: Upload JSONLD file as artifact
+        if: steps.run-cli.outputs.status == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: cli-log-file
-          path: code/LOG.txt
+          name: jsonld-${{ steps.dataset-info.outputs.repo }}
+          path: code/data/jsonld/${{ steps.dataset-info.outputs.repo }}.jsonld
+
+      - name: Upload log file as artifact  
+        uses: actions/upload-artifact@v4
+        with:
+          name: cli-log-${{ steps.dataset-info.outputs.repo }}
+          path: code/LOG_${{ steps.dataset-info.outputs.repo }}.txt
+
+      - name: Update sha.txt for successful run
+        if: steps.run-cli.outputs.status == 'success'
+        run: |
+          REPO="${{ steps.dataset-info.outputs.repo }}"
+          SHA="${{ steps.dataset-info.outputs.sha }}"
+          
+          # Look for existing SHA for the repo in sha.txt
+          old_repo_sha=$(grep "$REPO" code/sha.txt || true)
+          
+          cd code
+          if [ ! -z "$old_repo_sha" ]; then
+            echo "Updating SHA for $REPO in sha.txt"
+            sed -i "s/${old_repo_sha}/${REPO},${SHA}/" sha.txt
+          else
+            echo "Adding new SHA entry for $REPO in sha.txt" 
+            echo "${REPO},${SHA}" >> sha.txt
+          fi
+
+  consolidate-results:
+    name: Consolidate results and update sha.txt
+    needs: [parse-datasets, matrix-run-cli]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Generate a token
+        id: generate-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.NB_BOT_ID }}
+          private-key: ${{ secrets.NB_BOT_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: 'main'
+          token: ${{ steps.generate-token.outputs.token }}
+
+      - name: Download all JSONLD artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: jsonld-*
+          path: code/data/jsonld
+          merge-multiple: true
+
+      - name: Download all log artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: cli-log-*
+          path: code/logs
+          merge-multiple: true
+
+      - name: Consolidate logs
+        working-directory: code
+        run: |
+          # Create a consolidated log file
+          echo "=== Consolidated CLI Execution Log ===" > LOG.txt
+          echo "Generated at: $(date)" >> LOG.txt
+          echo "" >> LOG.txt
+          
+          for log_file in logs/LOG_*.txt; do
+            if [ -f "$log_file" ]; then
+              dataset=$(basename "$log_file" .txt | sed 's/LOG_//')
+              echo "=== Dataset: $dataset ===" >> LOG.txt
+              cat "$log_file" >> LOG.txt
+              echo "" >> LOG.txt
+            fi
+          done
 
       - name: Commit and push updated sha.txt file
-        # If sha.txt was not updated (i.e., all datasets failed?), skip this step
         run: |
-          # git diff --quiet silences the output and returns 0 if there are no modifications, or 1 if there are modifications
-          # 0 is considered "true" in bash, so we negate the condition to have it only evaluate to true if there are differences
           if ! git diff --quiet code/sha.txt; then
             git config user.name "GitHub Actions Bot"
             git config user.email "<>"
             git add code/sha.txt
-            git commit -m "[bot] Update record of repo SHAs"
+            git commit -m "[bot] Update record of repo SHAs (matrix execution)"
             git push origin main
           fi
 
