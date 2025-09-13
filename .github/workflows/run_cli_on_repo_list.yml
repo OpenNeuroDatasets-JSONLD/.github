@@ -66,6 +66,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: jsonld-files
+          # NOTE: code/data/jsonld is a temporary directory created by code/run_cli_single_dataset.sh
           path: code/data/jsonld
           # TODO: Add a retention policy to delete old artifacts
 
