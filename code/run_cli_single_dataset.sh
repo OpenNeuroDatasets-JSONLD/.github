@@ -1,17 +1,19 @@
 #!/bin/bash
-
 # formerly datalad_get_single_dataset.sh
+
+set -euo pipefail
 
 ds_id=$1
 
 # Get the data
 ds_portal="https://github.com/OpenNeuroDatasets-JSONLD/${ds_id}.git"
-ds_git="git@github.com:OpenNeuroDatasets-JSONLD/${ds_id}"
 
 ldin=data
-mkdir -p ${ldin}
 ldout=${ldin}/jsonld
+failed_bids_tsvs=${ldin}/failed_bids_tsv
+mkdir -p ${ldin}
 mkdir -p ${ldout}
+mkdir -p ${failed_bids_tsvs}
 
 # NOTE: realpath is used to get an absolute path of the directory
 workdir=$(realpath ${ldin}/${ds_id})
@@ -46,12 +48,19 @@ bagel pheno \
     --name "$ds_name" \
     --portal $ds_portal
 
-bagel bids2tsv --bids-dir ${workdir} --output ${workdir}/bids.tsv
+bagel bids2tsv --bids-dir ${workdir} --output ${workdir}/${ds_id}_bids.tsv
 
+# NOTE: dataget expects OpenNeuro imaging session paths to be in the format /dsXXXX/sub-XXX/ses-XXX
 bagel bids \
     --jsonld-path ${workdir}/pheno.jsonld \
-    --bids-table ${workdir}/bids.tsv \
-    --dataset-source-dir "/${ds_id}" \  # dataget expects OpenNeuro imaging session paths to be in the format /dsXXXX/sub-XXX/ses-XXX
+    --bids-table ${workdir}/${ds_id}_bids.tsv \
+    --dataset-source-dir "/${ds_id}" \
     --output ${workdir}/pheno_bids.jsonld
+
+exit_code=$?
+if (( exit_code != 0 )); then
+    cp ${workdir}/${ds_id}_bids.tsv ${failed_bids_tsvs}
+    echo "Moved BIDS metadata table for failed dataset to ${failed_bids_tsvs}."
+fi
 
 cp ${workdir}/pheno_bids.jsonld ${out_jsonld_path}
