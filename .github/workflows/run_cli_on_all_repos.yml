@@ -52,5 +52,6 @@ jobs:
       needs: get-repos
       uses: OpenNeuroDatasets-JSONLD/.github/.github/workflows/run_cli_on_repo_list.yml@main
       with:
-        dataset-list: ${{ needs.get-repos.outputs.dataset_list }}
+        dataset_list: ${{ needs.get-repos.outputs.dataset_list }}
+        clear_old_jsonlds: true
       secrets: inherit

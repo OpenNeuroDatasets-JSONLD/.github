@@ -7,15 +7,23 @@ on:
   workflow_call:
     inputs:
       # NOTE: If this input is empty, the workflow should not run
-      dataset-list:
+      dataset_list:
         description: "String representing a list of repos to update"
         required: true
         type: string
+      clear_old_jsonlds:
+        description: "Whether to delete all existing JSONLD files in neurobagel/openneuro-annotations"
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   batch-run-cli:
     name: Batch run CLI
     runs-on: ubuntu-latest
+    outputs:
+      were_new_jsonlds_created: ${{ steps.check-jsonlds.outputs.were_new_jsonlds_created }}
+
     steps:
       - name: Generate a token
         id: generate-token
@@ -56,10 +64,19 @@ jobs:
       - name: Run CLI
         working-directory: code
         # Passing input as a file to avoid issues with multiline strings
-        # NOTE: This step also removes the quotes in dataset-list (we add these back inside batch_run_cli.sh)
+        # NOTE: This step also removes the quotes in dataset_list (we add these back inside batch_run_cli.sh)
         run: |
-          echo "${{ inputs.dataset-list }}" > dataset_list.txt
+          echo "${{ inputs.dataset_list }}" > dataset_list.txt
           ./batch_run_cli.sh dataset_list.txt 2>&1 | tee -a LOG.txt
+      
+      - name: Check if new JSONLD files were created
+        id: check-jsonlds
+        run: |
+          if [ -d "code/data/jsonld" ] && [ "$(ls code/data/jsonld)" ]; then
+            echo "were_new_jsonlds_created=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "were_new_jsonlds_created=false" >> "$GITHUB_OUTPUT"
+          fi
       
       # TODO: If this gets too slow, try https://github.com/actions/cache
       - name: Upload JSONLD files as artifacts
@@ -68,6 +85,7 @@ jobs:
           name: jsonld-files
           # NOTE: code/data/jsonld is a temporary directory created by code/run_cli_single_dataset.sh
           path: code/data/jsonld
+          if-no-files-found: ignore
           # TODO: Add a retention policy to delete old artifacts
 
       - name: Upload failed BIDS metadata tables if any
@@ -120,10 +138,15 @@ jobs:
           token: ${{ steps.generate-token.outputs.token }}
 
       - name: Clear existing jsonld files
-        run: rm -f jsonld/*
+        if: ${{ inputs.clear_old_jsonlds }}
+        run: rm jsonld/*
 
+      # NOTE: We need a variable to explicitly check if new JSONLD files were created
+      # because download-artifact doesn't offer an if-no-files-found condition
+      # and would otherwise fail if there is nothing to download.
       - name: Download JSONLD files artifact
         uses: actions/download-artifact@v4
+        if: needs.batch-run-cli.outputs.were_new_jsonlds_created == 'true'
         with:
           name: jsonld-files
           path: jsonld
@@ -134,7 +157,18 @@ jobs:
           name: cli-log-file
           # NOTE: Path must be a directory, not a file
           path: jsonld
-      
+
+      # Sanity check in the case where we want to regenerate JSONLDs for ALL datasets
+      # (i.e., clear_old_jsonlds is true)
+      # but the CLI run failed to produce any new JSONLD files 
+      # - this would most likely indicate a problem on our end.
+      - name: Check that there's at least one JSONLD file
+        run: |
+          if ! find jsonld -type f -name "*.jsonld" | grep -q .; then
+            echo "No JSONLD files remaining in the jsonld/ directory, exiting."
+            exit 1
+          fi
+
       # Configure git to use the GitHub App's bot user
       # https://github.com/actions/create-github-app-token?tab=readme-ov-file#configure-git-cli-for-an-apps-bot-user
       - name: Get GitHub App User ID
@@ -149,8 +183,9 @@ jobs:
           git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.generate-token.outputs.app-slug }}[bot]@users.noreply.github.com'
 
       - name: Commit and push updated JSONLD files
-        # TODO: If there are no JSONLD files to update, skip this step
         run: |
-          git add -A jsonld/*
-          git commit -m "[bot] Update JSONLD files and CLI log"
-          git push origin auto-update-jsonlds
+          if ! git diff --quiet jsonld; then
+            git add -A jsonld
+            git commit -m "[bot] Update JSONLD files and CLI log"
+            git push origin auto-update-jsonlds
+          fi
