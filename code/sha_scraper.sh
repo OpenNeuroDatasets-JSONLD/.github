@@ -52,7 +52,7 @@ touch changed_repos.txt
 for repo in $reposON_LD; do
     # Get the SHA of the latest commit in the repo (NOTE: This will always be from the default branch)
     # TODO: Test if the SHA we grab here changes with a new commit
-    sha=$(curl -L \
+    sha=$(curl -sS -L \
         -H "Accept: application/vnd.github+json" \
         -H "Authorization: Bearer ${GH_TOKEN}" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
