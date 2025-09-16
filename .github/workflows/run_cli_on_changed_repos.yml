@@ -45,7 +45,7 @@ jobs:
             done
             echo 'EOF' >> "$GITHUB_OUTPUT"
         
-        # TODO: Push LOG.txt to .github repo?
+        # Upload the log from the sha scraper process for debugging purposes
         - name: Upload log file as artifact
           uses: actions/upload-artifact@v4
           with:

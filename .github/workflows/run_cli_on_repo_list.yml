@@ -96,7 +96,7 @@ jobs:
           path: code/data/failed_bids_tsv
           if-no-files-found: ignore
 
-      - name: Upload log file as artifact
+      - name: Upload CLI log as artifact
         uses: actions/upload-artifact@v4
         with:
           name: cli-log-file
