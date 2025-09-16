@@ -51,16 +51,15 @@ bagel pheno \
 bagel bids2tsv --bids-dir ${workdir} --output ${workdir}/${ds_id}_bids.tsv
 
 # NOTE: dataget expects OpenNeuro imaging session paths to be in the format /dsXXXX/sub-XXX/ses-XXX
-bagel bids \
+if ! bagel bids \
     --jsonld-path ${workdir}/pheno.jsonld \
     --bids-table ${workdir}/${ds_id}_bids.tsv \
     --dataset-source-dir "/${ds_id}" \
-    --output ${workdir}/pheno_bids.jsonld
+    --output ${workdir}/pheno_bids.jsonld; then
 
-exit_code=$?
-if (( exit_code != 0 )); then
     cp ${workdir}/${ds_id}_bids.tsv ${failed_bids_tsvs}
     echo "Moved BIDS metadata table for failed dataset to ${failed_bids_tsvs}."
+    exit 1
 fi
 
 cp ${workdir}/pheno_bids.jsonld ${out_jsonld_path}
