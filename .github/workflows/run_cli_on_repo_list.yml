@@ -111,7 +111,10 @@ jobs:
           token: ${{ steps.generate-token.outputs.token }}
 
       - name: Clear existing jsonld files
-        run: rm -f jsonld/*
+        run: |
+          ls jsonld/
+          rm -f jsonld/*
+          git status
 
       - name: Download JSONLD files artifact
         uses: actions/download-artifact@v4
