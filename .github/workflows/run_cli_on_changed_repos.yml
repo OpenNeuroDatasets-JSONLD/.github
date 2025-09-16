@@ -9,8 +9,8 @@ on:
   workflow_dispatch:
 
 jobs:
-    get-updated-files:
-      name: Get updated JSONLD files
+    get-updated-repos:
+      name: Get changed OpenNeuroDatasets-JSONLD repos
       runs-on: ubuntu-latest
       # See https://docs.github.com/en/actions/using-jobs/defining-outputs-for-jobs
       outputs:
@@ -64,10 +64,10 @@ jobs:
             fi
 
     call-run-cli-on-repo-list:
-      needs: get-updated-files
+      needs: get-updated-repos
       # Only run this job if the list of changed repos is not empty
-      if: ${{ needs.get-updated-files.outputs.dataset_list != '' }}
+      if: ${{ needs.get-updated-repos.outputs.dataset_list != '' }}
       uses: OpenNeuroDatasets-JSONLD/.github/.github/workflows/run_cli_on_repo_list.yml@main
       with:
-        dataset-list: ${{ needs.get-updated-files.outputs.dataset_list }}
+        dataset-list: ${{ needs.get-updated-repos.outputs.dataset_list }}
       secrets: inherit
