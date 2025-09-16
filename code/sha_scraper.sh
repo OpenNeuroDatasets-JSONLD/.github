@@ -62,7 +62,7 @@ for repo in $reposON_LD; do
     line=$(grep "$repo" sha.txt)
 
     # If line with repo SHA is found
-    if [ ! -z "$line" ]; then
+    if [ -n "$line" ]; then
         echo "${repo}: SHA found in file"
         old_sha=$(echo $line | cut -d, -f2)
         # if the SHA is not the same as the old one
