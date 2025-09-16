@@ -22,24 +22,28 @@ reposON_LD=$(gh repo list "$OWNER" --fork --limit ${nRepos} --json name --jq '.[
 
 do_cli_pheno_files_exist() {
     local repo=$1
+    local participant_tsv_response participant_json_response
+
     # Check if participants.tsv exists
-    local participant_tsv_response=$(curl -s -o /dev/null -w "%{http_code}" \
-    -H "Accept: application/vnd.github+json" \
-    -H "Authorization: Bearer ${GH_TOKEN}" \
-    -H "X-GitHub-Api-Version: 2022-11-28" \
-    https://api.github.com/repos/${OWNER}/${repo}/contents/participants.tsv)
+    participant_tsv_response=$(curl -s -o /dev/null -w "%{http_code}" \
+        -H "Accept: application/vnd.github+json" \
+        -H "Authorization: Bearer ${GH_TOKEN}" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        https://api.github.com/repos/${OWNER}/${repo}/contents/participants.tsv)
 
     # check if participants.json exists
-    local participant_json_response=$(curl -s -o /dev/null -w "%{http_code}" \
-    -H "Accept: application/vnd.github+json" \
-    -H "Authorization: Bearer ${GH_TOKEN}" \
-    -H "X-GitHub-Api-Version: 2022-11-28" \
-    https://api.github.com/repos/${OWNER}/${repo}/contents/participants.json)
+    participant_json_response=$(curl -s -o /dev/null -w "%{http_code}" \
+        -H "Accept: application/vnd.github+json" \
+        -H "Authorization: Bearer ${GH_TOKEN}" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        https://api.github.com/repos/${OWNER}/${repo}/contents/participants.json)
 
     if (( ($participant_tsv_response >= 200 && $participant_tsv_response < 300 ) && ($participant_json_response >= 200 && $participant_json_response < 300 ) )); then
-        echo true
+        # success
+        return 0
     else
-        echo false
+        # failure
+        return 1
     fi
 }
 
@@ -62,12 +66,12 @@ for repo in $reposON_LD; do
         echo "${repo}: SHA found in file"
         old_sha=$(echo $line | cut -d, -f2)
         # if the SHA is not the same as the old one
-        if [ $old_sha != "$sha" ]; then
+        if [ "$old_sha" != "$sha" ]; then
             echo "${repo}: latest SHA is different than existing SHA"
-            if do_cli_pheno_files_exist $repo == true; then
+            if do_cli_pheno_files_exist "$repo"; then
                 # Add repo ID and current SHA of repo to a list of datasets to run the CLI on
                 echo "${repo}: Adding to job list for CLI"
-                echo $repo,$sha >> changed_repos.txt
+                echo "${repo},${sha}" >> changed_repos.txt
             else
                 # If files needed for CLI not found, simply replace the old SHA with the new one
                 echo "${repo}: participants.json and/or participants.tsv not found"
@@ -80,12 +84,12 @@ for repo in $reposON_LD; do
     else
         echo "${repo}: SHA not found"
         
-        if do_cli_pheno_files_exist $repo == true; then
+        if do_cli_pheno_files_exist "$repo"; then
             echo "${repo}: Adding to job list for CLI"
-            echo $repo,$sha >> changed_repos.txt
+            echo "${repo},${sha}" >> changed_repos.txt
         fi
 
         echo "${repo}: Writing latest SHA to file"
-        echo $repo,$sha >> sha.txt
+        echo "${repo},${sha}" >> sha.txt
     fi
 done
