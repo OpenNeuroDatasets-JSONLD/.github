@@ -39,10 +39,8 @@ do_cli_pheno_files_exist() {
         https://api.github.com/repos/${OWNER}/${repo}/contents/participants.json)
 
     if (( ($participant_tsv_response >= 200 && $participant_tsv_response < 300 ) && ($participant_json_response >= 200 && $participant_json_response < 300 ) )); then
-        # success
         return 0
     else
-        # failure
         return 1
     fi
 }

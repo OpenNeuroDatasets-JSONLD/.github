@@ -14,8 +14,8 @@ update_sha_file() {
     # Look for an existing SHA for the repo in sha.txt
     old_repo_sha=$(grep "$repo" sha.txt)
 
-    # The following section is similar to code in sha_scraper.sh but updates SHAs in sha.txt for a different set of repos
-    # Essentially, for a repo that has *successfully run the CLI*, make sure we now record their most up to date SHA
+    # The following section is similar to code in sha_scraper.sh, but instead updates SHAs in sha.txt for
+    # each repo that has *successfully run the CLI*, to ensure we now record their most up to date SHA
     # (i.e., to indicate when the last successful CLI run happened).
     # To achieve this:
     # - if the repo DOES already have an entry in sha.txt, we replace (update) the existing SHA with the current SHA
@@ -43,7 +43,8 @@ for dataset in $(cat $dataset_list_path); do
         echo "${repo}: CLI ran successfully!"
         update_sha_file "$repo" "$sha"
     else
-        # Look for substring from "...must contain at least one column with Neurobagel annotations" error message
+        # Look in the error message for substring from 
+        # "...must contain at least one column with Neurobagel annotations"
         # to indicate that data dictionary is missing Neurobagel annotations
         # (we use a substring to avoid issues with logs being wrapped)
         if echo "$cli_output" | grep -q "one column with Neurobagel annotations"; then
