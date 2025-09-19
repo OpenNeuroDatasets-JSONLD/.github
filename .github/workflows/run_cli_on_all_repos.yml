@@ -35,7 +35,7 @@ jobs:
             # The following syntax ensures that "repos" is a multiline string, where each line represents one repo
             # See: https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#multiline-strings
             echo 'repos<<EOF' >> "$GITHUB_OUTPUT"
-            for line in $(cat repos.txt); do
+            for line in $(cat repos_for_cli.txt); do
               echo $line >> "$GITHUB_OUTPUT"
             done
             echo 'EOF' >> "$GITHUB_OUTPUT"
