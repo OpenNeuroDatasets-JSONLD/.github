@@ -1,11 +1,12 @@
-# This workflow runs on a schedule and when manually triggered. It checks for changes to the OpenNeuroDatasets-JSONLD repos, 
+# This workflow runs on a schedule (every day at midnight EST) and when manually triggered. 
+# It checks for changes to the OpenNeuroDatasets-JSONLD repos, 
 # and calls a reusable workflow to run the CLI on repos that have changed *or* are new.
 # The workflow directly updates the sha.txt file for repos whose SHAs have changed but are missing required files for the CLI.
 name: Run CLI on changed repos
 
 on:
   schedule:
-    - cron: '31 12,0 * * *'
+    - cron: '0 5 * * *'
   workflow_dispatch:
 
 jobs:
@@ -40,7 +41,7 @@ jobs:
             # The following syntax ensures that "changed_repos" is a multiline string, where each line represents one repo
             # See: https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#multiline-strings
             echo 'changed_repos<<EOF' >> "$GITHUB_OUTPUT"
-            for line in $(cat changed_repos.txt); do
+            for line in $(cat repos_for_cli.txt); do
               echo $line >> "$GITHUB_OUTPUT"
             done
             echo 'EOF' >> "$GITHUB_OUTPUT"
