@@ -29,6 +29,9 @@ update_sha_file() {
     fi
 }
 
+# NOTE: We create an empty file to keep track of datasets where participants.json is missing Neurobagel annotations
+# so that there's always a file to upload/download as an artifact later on (even if it's empty).
+touch datasets_missing_annotations.txt
 for dataset in $(cat $dataset_list_path); do
     repo=$(echo $dataset | cut -d ',' -f 1)
     sha=\"$(echo $dataset | cut -d ',' -f 2)\"
