@@ -9,6 +9,7 @@
 flag="$1"
 
 OWNER="OpenNeuroDatasets-JSONLD"
+DATASETS_FOR_CLI_LIMIT=150
 
 # TODO: Refactor out code to get list of repos in the organization, since we reuse this in run_cli_on_all_repos.yml
 nRepos=$(gh api graphql -f query='{
@@ -59,8 +60,8 @@ for repo in $reposON_LD; do
         https://api.github.com/repos/${OWNER}/${repo}/commits | jq .[0].sha)
 
     if [[ "$flag" == "--all-repos" ]]; then
-        if [ $(wc -l < repos_for_cli.txt) -eq 150 ]; then
-            echo "Reached limit of 150 datasets in repos_for_cli.txt."
+        if [ $(wc -l < repos_for_cli.txt) -eq $DATASETS_FOR_CLI_LIMIT ]; then
+            echo "Reached limit of $DATASETS_FOR_CLI_LIMIT datasets in repos_for_cli.txt."
             break
         fi
         # When running the CLI on all repos from scratch, we don't compare the SHAs, 
