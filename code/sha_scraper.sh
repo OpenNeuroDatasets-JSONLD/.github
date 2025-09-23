@@ -59,6 +59,10 @@ for repo in $reposON_LD; do
         https://api.github.com/repos/${OWNER}/${repo}/commits | jq .[0].sha)
 
     if [[ "$flag" == "--all-repos" ]]; then
+        if [ $(wc -l < repos_for_cli.txt) -eq 150 ]; then
+            echo "Reached limit of 150 datasets in repos_for_cli.txt."
+            break
+        fi
         # When running the CLI on all repos from scratch, we don't compare the SHAs, 
         # we just check if the repo has been 'seen' before
         if grep -q "$repo" sha.txt; then
