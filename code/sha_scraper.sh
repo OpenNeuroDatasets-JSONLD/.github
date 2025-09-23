@@ -9,6 +9,7 @@
 flag="$1"
 
 OWNER="OpenNeuroDatasets-JSONLD"
+DATASETS_FOR_CLI_LIMIT=150
 
 # TODO: Refactor out code to get list of repos in the organization, since we reuse this in run_cli_on_all_repos.yml
 nRepos=$(gh api graphql -f query='{
@@ -59,12 +60,25 @@ for repo in $reposON_LD; do
         https://api.github.com/repos/${OWNER}/${repo}/commits | jq .[0].sha)
 
     if [[ "$flag" == "--all-repos" ]]; then
-        if do_cli_pheno_files_exist "$repo"; then
-            echo "${repo}: Adding to job list for CLI"
-            echo "${repo},${sha}" >> repos_for_cli.txt
+        if [ $(wc -l < repos_for_cli.txt) -eq $DATASETS_FOR_CLI_LIMIT ]; then
+            echo "Reached limit of $DATASETS_FOR_CLI_LIMIT datasets in repos_for_cli.txt."
+            break
+        fi
+        # When running the CLI on all repos from scratch, we don't compare the SHAs, 
+        # we just check if the repo has been 'seen' before
+        if grep -q "$repo" sha.txt; then
+            echo "${repo}: Dataset found in sha.txt. Skipping."
+        elif grep -q "$repo" failed_cli_datasets.txt; then
+            echo "${repo}: Dataset previously failed CLI. Skipping."
         else
-            echo "${repo}: Writing latest SHA to file"
-            echo "${repo},${sha}" >> sha.txt
+            if do_cli_pheno_files_exist "$repo"; then
+                echo "${repo}: Adding to job list for CLI"
+                echo "${repo},${sha}" >> repos_for_cli.txt
+            else
+                echo "${repo}: participants.json and/or participants.tsv not found"
+                echo "${repo}: Writing latest SHA to file"
+                echo "${repo},${sha}" >> sha.txt
+            fi
         fi
     else
         # Get the line with the old SHA from sha.txt for the repo

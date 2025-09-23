@@ -48,13 +48,14 @@ for dataset in $(cat $dataset_list_path); do
         # to indicate that data dictionary is missing Neurobagel annotations
         # (we use a substring to avoid issues with logs being wrapped)
         if echo "$cli_output" | grep -q "one column with Neurobagel annotations"; then
-            echo "${repo}: participants.json is missing Neurobagel annotations. Saving repo ID to datasets_missing_annotations.txt"
-            echo "$repo" >> datasets_missing_annotations.txt
+            echo "${repo}: participants.json is missing Neurobagel annotations. Saving repo ID to temp_datasets_missing_annotations.txt"
+            echo "${repo}" >> temp_datasets_missing_annotations.txt
             update_sha_file "$repo" "$sha"
         fi
         # If the CLI failed for the repo and the dataset was annotated, 
         # we do not update or add an entry to sha.txt so that the next time this script is called, 
         # the CLI will be attempted again for that repo.
         echo "${repo}: CLI failed"
+        echo "${repo}" >> failed_cli_datasets.txt
     fi
 done

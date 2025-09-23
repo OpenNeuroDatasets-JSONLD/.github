@@ -37,6 +37,7 @@ jobs:
           # is directly updated in the sha.txt file without being added to changed_repos (i.e., we don't run the CLI on them).
           run: |
             ./sha_scraper.sh 2>&1 | tee -a LOG.txt
+            echo "$(wc -l < repos_for_cli.txt) datasets queued for CLI processing."
 
             # The following syntax ensures that "changed_repos" is a multiline string, where each line represents one repo
             # See: https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#multiline-strings
