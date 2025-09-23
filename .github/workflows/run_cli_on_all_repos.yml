@@ -4,8 +4,12 @@ name: Run CLI on all repos
 on:
   workflow_dispatch:
     inputs:
-      clear_sha:
-        description: "Whether to clear the sha.txt file (default: false)"
+      reset_sha:
+        description: "Whether to reset the sha.txt file (default: false)"
+        required: false
+        default: "false"
+      reset_failed_datasets:
+        description: "Whether to clear the failed_cli_datasets.txt file (default: false)"
         required: false
         default: "false"
 
@@ -20,10 +24,10 @@ jobs:
         - name: Checkout
           uses: actions/checkout@v4
 
-        - name: Clear existing sha.txt
-          if: ${{ github.event.inputs.clear_sha == 'true' }}
+        - name: Resetting sha.txt
+          if: ${{ github.event.inputs.reset_sha == 'true' }}
           run: |
-            echo "Clearing existing sha.txt file."
+            echo "Resetting existing sha.txt file."
             > code/sha.txt
 
         # This step gets a list of all repos in OpenNeuroDatasets-JSONLD, and fetches each repo's latest SHA.
@@ -71,4 +75,5 @@ jobs:
       with:
         dataset_list: ${{ needs.get-repos.outputs.dataset_list }}
         clear_old_jsonlds: true
+        reset_failed_datasets: ${{ github.event.inputs.reset_failed_datasets == 'true'}}
       secrets: inherit

@@ -16,6 +16,11 @@ on:
         required: false
         type: boolean
         default: false
+      reset_failed_datasets:
+        description: "Whether to reset failed_cli_datasets.txt before starting the CLI runs"
+        required: false
+        type: boolean
+        default: true
 
 jobs:
   batch-run-cli:
@@ -60,6 +65,21 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r code/requirements.txt
+
+      - name: Reset failed_cli_datasets.txt
+        if: ${{ inputs.reset_failed_datasets }}
+        run: |
+          echo "Resetting failed_cli_datasets.txt"
+          > code/failed_cli_datasets.txt
+
+      # NOTE: We create a fresh file to track datasets *in the current run only*
+      # where participants.json is missing Neurobagel annotations,
+      # so that there's always a file to upload/download as an artifact later on (even if it's empty).
+      # In future, we might want to expand the logic to allow removing or adding to a persistent list
+      # across runs depending on CLI outcome.
+      - name: Reset datasets_missing_annotations.txt
+        run: |
+          > code/temp_datasets_missing_annotations.txt
 
       - name: Run CLI
         working-directory: code
@@ -111,16 +131,17 @@ jobs:
           path: code/temp_datasets_missing_annotations.txt
           if-no-files-found: ignore
 
-      - name: Commit and push updated sha.txt file
-        # If sha.txt was not updated (i.e., all datasets failed?), skip this step
+      - name: Commit and push updated sha.txt and failed_cli_datasets.txt
         run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "<>"
+
+          git add code/sha.txt code/failed_cli_datasets.txt
+
           # git diff --quiet silences the output and returns 0 if there are no modifications, or 1 if there are modifications
           # 0 is considered "true" in bash, so we negate the condition to have it only evaluate to true if there are differences
-          if ! git diff --quiet code/sha.txt; then
-            git config user.name "GitHub Actions Bot"
-            git config user.email "<>"
-            git add code/sha.txt
-            git commit -m "[bot] Update record of repo SHAs"
+          if ! git diff --cached --quiet; then
+            git commit -m "[bot] Update record of repo SHAs and datasets that failed the CLI"
             git push origin main
           fi
 
