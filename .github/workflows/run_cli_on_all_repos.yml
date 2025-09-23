@@ -8,10 +8,18 @@ on:
         description: "Whether to reset the sha.txt file (default: false)"
         required: false
         default: "false"
+        type: choice
+        options:
+          - "true"
+          - "false"
       reset_failed_datasets:
         description: "Whether to clear the failed_cli_datasets.txt file (default: false)"
         required: false
         default: "false"
+        type: choice
+        options:
+          - "true"
+          - "false"
 
 jobs:
     get-repos:
