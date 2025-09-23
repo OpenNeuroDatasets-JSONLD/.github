@@ -108,7 +108,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: datasets-missing-annotations
-          path: code/datasets_missing_annotations.txt
+          path: code/temp_datasets_missing_annotations.txt
           if-no-files-found: ignore
 
       - name: Commit and push updated sha.txt file
