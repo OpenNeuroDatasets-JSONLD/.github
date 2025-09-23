@@ -100,5 +100,4 @@ jobs:
       with:
         dataset_list: ${{ needs.get-repos.outputs.dataset_list }}
         clear_old_jsonlds: true
-        reset_failed_datasets: ${{ github.event.inputs.reset_failed_datasets == 'true'}}
       secrets: inherit
