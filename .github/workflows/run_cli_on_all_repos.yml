@@ -71,6 +71,8 @@ jobs:
 
     call-run-cli-on-repo-list:
       needs: get-repos
+      # Only run this job if the list of repos is not empty
+      if: ${{ needs.get-repos.outputs.dataset_list != '' }}
       uses: OpenNeuroDatasets-JSONLD/.github/.github/workflows/run_cli_on_repo_list.yml@main
       with:
         dataset_list: ${{ needs.get-repos.outputs.dataset_list }}
