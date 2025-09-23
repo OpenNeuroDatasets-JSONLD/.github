@@ -72,12 +72,13 @@ jobs:
           echo "Resetting failed_cli_datasets.txt"
           > code/failed_cli_datasets.txt
 
-      # NOTE: We create a fresh file to track datasets *in the current run only*
-      # where participants.json is missing Neurobagel annotations,
-      # so that there's always a file to upload/download as an artifact later on (even if it's empty).
+      # Ensure a file called temp_datasets_missing_annotations.txt exists on disk
+      # for tracking datasets *in the current run only* where participants.json is missing Neurobagel annotations,
+      # so that when we attempt to upload/download it as an artifact later on (to store in openneuro-annotations),
+      # we don't get an artifact not found error.
       # In future, we might want to expand the logic to allow removing or adding to a persistent list
       # across runs depending on CLI outcome.
-      - name: Reset datasets_missing_annotations.txt
+      - name: Reset temp_datasets_missing_annotations.txt
         run: |
           > code/temp_datasets_missing_annotations.txt
 
