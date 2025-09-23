@@ -201,6 +201,6 @@ jobs:
         run: |
           if ! git diff --quiet jsonld; then
             git add -A jsonld
-            git commit -m "[bot] Update JSONLD files and CLI log"
+            git commit -m "[bot] Update JSONLD files and list of datasets missing annotations"
             git push origin auto-update-jsonlds
           fi
