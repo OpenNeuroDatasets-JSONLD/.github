@@ -21,6 +21,11 @@ jobs:
         - name: Checkout
           uses: actions/checkout@v4
 
+        - name: Reset failed_cli_datasets.txt
+          run: |
+            echo "Resetting failed_cli_datasets.txt"
+            > code/failed_cli_datasets.txt
+
         - id: detect-changed-repos
           name: Detect changed repos
           env:
@@ -54,14 +59,14 @@ jobs:
             name: log-file
             path: code/LOG.txt
 
-        - name: Commit and push updated sha.txt file
-          # NOTE: git push only has access to whatever branch is currently checked out
+        - name: Commit and push updated sha.txt and failed_cli_datasets.txt
           run: |
-            if ! git diff --quiet code/sha.txt; then
-              git config user.name "GitHub Actions Bot"
-              git config user.email "<>"
-              git add code/sha.txt
-              git commit -m "[bot] Update record of repo SHAs"
+            git config user.name "GitHub Actions Bot"
+            git config user.email "<>"
+
+            git add code/sha.txt code/failed_cli_datasets.txt
+            if ! git diff --cached --quiet; then
+              git commit -m "[bot] Update record of repo SHAs and reset failed_cli_datasets.txt"
               git push origin main
             fi
 

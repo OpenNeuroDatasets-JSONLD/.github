@@ -16,11 +16,6 @@ on:
         required: false
         type: boolean
         default: false
-      reset_failed_datasets:
-        description: "Whether to reset failed_cli_datasets.txt before starting the CLI runs"
-        required: false
-        type: boolean
-        default: true
 
 jobs:
   batch-run-cli:
@@ -65,12 +60,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r code/requirements.txt
-
-      - name: Reset failed_cli_datasets.txt
-        if: ${{ inputs.reset_failed_datasets }}
-        run: |
-          echo "Resetting failed_cli_datasets.txt"
-          > code/failed_cli_datasets.txt
 
       # Ensure a file called temp_datasets_missing_annotations.txt exists on disk
       # for tracking datasets *in the current run only* where participants.json is missing Neurobagel annotations,

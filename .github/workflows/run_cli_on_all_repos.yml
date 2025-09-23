@@ -38,6 +38,14 @@ jobs:
             echo "Resetting existing sha.txt file."
             > code/sha.txt
 
+        # When running the CLI on all repos, we want to initially clear any existing failed_cli_datasets.txt
+        # so that sha_scraper.sh doesn't skip repos that failed when the CLI was last run.
+        - name: Reset failed_cli_datasets.txt
+          if: ${{ github.event.inputs.reset_failed_datasets == 'true' }}
+          run: |
+            echo "Resetting failed_cli_datasets.txt"
+            > code/failed_cli_datasets.txt
+
         # This step gets a list of all repos in OpenNeuroDatasets-JSONLD, and fetches each repo's latest SHA.
         # If the repo contains the required files for the bagel CLI, the repo ID and its latest SHA are written to a job output variable "repos"
         # which forms the list the CLI will run on.
@@ -66,14 +74,21 @@ jobs:
             name: log-file
             path: code/LOG.txt
 
-        - name: Commit and push updated sha.txt file
+        - name: Commit and push updated sha.txt and failed_cli_datasets.txt
           # NOTE: git push only has access to whatever branch is currently checked out
           run: |
-            if ! git diff --quiet code/sha.txt; then
-              git config user.name "GitHub Actions Bot"
-              git config user.email "<>"
-              git add code/sha.txt
-              git commit -m "[bot] Update record of repo SHAs"
+            if [ "${{ github.event.inputs.reset_failed_datasets }}" == "true" ]; then
+              commit_message="[bot] Update record of repo SHAs and reset failed_cli_datasets.txt"
+            else
+              commit_message="[bot] Update record of repo SHAs"
+            fi
+
+            git config user.name "GitHub Actions Bot"
+            git config user.email "<>"
+
+            git add code/sha.txt code/failed_cli_datasets.txt
+            if ! git diff --cached --quiet; then
+              git commit -m "$commit_message"
               git push origin main
             fi
 
