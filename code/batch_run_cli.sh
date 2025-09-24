@@ -29,10 +29,12 @@ update_sha_file() {
     fi
 }
 
+total_datasets=$(wc -l < $dataset_list_path)
+count=1
 for dataset in $(cat $dataset_list_path); do
     repo=$(echo $dataset | cut -d ',' -f 1)
     sha=\"$(echo $dataset | cut -d ',' -f 2)\"
-    echo "Repo info: $repo,$sha"
+    echo "($count/$total_datasets) Repo info: $repo,$sha"
 
     echo "${repo}: Running the CLI"
     cli_output=$(./run_cli_single_dataset.sh $repo)
@@ -58,4 +60,6 @@ for dataset in $(cat $dataset_list_path); do
         echo "${repo}: CLI failed"
         echo "${repo}" >> failed_cli_datasets.txt
     fi
+
+    count=$((count + 1))
 done
