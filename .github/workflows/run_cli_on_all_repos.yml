@@ -4,6 +4,10 @@ name: Run CLI on all repos
 on:
   workflow_dispatch:
     inputs:
+      max_num_datasets:
+        description: "Max number of datasets to run the CLI on. Set to 0 to run on all datasets."
+        required: false
+        default: "180"
       # TODO: We could probably combine reset_sha, reset_failed_datasets, and clear_old_jsonlds into a single input
       # since they should all be set to the same value for any given run.
       reset_sha:
@@ -67,7 +71,7 @@ jobs:
           working-directory: code
           # NOTE: When a repo doesn't exist, the curl command complains confusingly: jq: error (at <stdin>:4): Cannot index object with number
           run: |
-            ./sha_scraper.sh --all-repos 2>&1 | tee -a LOG.txt
+            ./sha_scraper.sh --all-repos ${{ github.event.inputs.max_num_datasets }} 2>&1 | tee -a LOG.txt
 
             # The following syntax ensures that "repos" is a multiline string, where each line represents one repo
             # See: https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#multiline-strings
