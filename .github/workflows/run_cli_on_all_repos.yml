@@ -4,8 +4,10 @@ name: Run CLI on all repos
 on:
   workflow_dispatch:
     inputs:
+      # TODO: We could probably combine reset_sha, reset_failed_datasets, and clear_old_jsonlds into a single input
+      # since they should all be set to the same value for any given run.
       reset_sha:
-        description: "Whether to reset the sha.txt file (default: false)"
+        description: "Whether to reset the sha.txt file"
         required: false
         default: "false"
         type: choice
@@ -13,7 +15,15 @@ on:
           - "true"
           - "false"
       reset_failed_datasets:
-        description: "Whether to clear the failed_cli_datasets.txt file (default: false)"
+        description: "Whether to clear the failed_cli_datasets.txt file"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "true"
+          - "false"
+      clear_old_jsonlds:
+        description: "Whether to delete all existing JSONLD files in neurobagel/openneuro-annotations"
         required: false
         default: "false"
         type: choice
@@ -99,5 +109,5 @@ jobs:
       uses: OpenNeuroDatasets-JSONLD/.github/.github/workflows/run_cli_on_repo_list.yml@main
       with:
         dataset_list: ${{ needs.get-repos.outputs.dataset_list }}
-        clear_old_jsonlds: true
+        clear_old_jsonlds: ${{ github.event.inputs.clear_old_jsonlds == 'true' }}
       secrets: inherit
