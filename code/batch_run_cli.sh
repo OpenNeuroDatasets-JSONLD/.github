@@ -37,8 +37,10 @@ for dataset in $(cat $dataset_list_path); do
     echo "($count/$total_datasets) Repo info: $repo,$sha"
 
     echo "${repo}: Running the CLI"
-    cli_output=$(./run_cli_single_dataset.sh $repo)
-    cli_exit_code=$?
+    # Capture stderr and stdout but also print to the terminal live
+    # and capture the exit code of run_cli_single_dataset.sh only
+    cli_output=$(./run_cli_single_dataset.sh "$repo" 2>&1 | tee /dev/tty)
+    cli_exit_code=${PIPESTATUS[0]}
 
     # Check if the CLI ran successfully
     if [ $cli_exit_code -eq 0 ]; then

@@ -6,10 +6,12 @@
 # If both files exist, the repo ID and current SHA are added to a list of datasets to run the CLI on.
 # If a file needed for the CLI is not found, the script only updates the SHA in sha.txt without doing anything else.
 
-flag="$1"
+FLAG="$1"
+MAX_DATASETS_FOR_CLI="${2:-0}"
 
 OWNER="OpenNeuroDatasets-JSONLD"
-DATASETS_FOR_CLI_LIMIT=150
+
+echo "Maximum number of datasets to run the CLI on: $MAX_DATASETS_FOR_CLI"
 
 # TODO: Refactor out code to get list of repos in the organization, since we reuse this in run_cli_on_all_repos.yml
 nRepos=$(gh api graphql -f query='{
@@ -59,9 +61,9 @@ for repo in $reposON_LD; do
         -H "X-GitHub-Api-Version: 2022-11-28" \
         https://api.github.com/repos/${OWNER}/${repo}/commits | jq .[0].sha)
 
-    if [[ "$flag" == "--all-repos" ]]; then
-        if [ $(wc -l < repos_for_cli.txt) -eq $DATASETS_FOR_CLI_LIMIT ]; then
-            echo "Reached limit of $DATASETS_FOR_CLI_LIMIT datasets in repos_for_cli.txt."
+    if [[ "$FLAG" == "--all-repos" ]]; then
+        if [ "$MAX_DATASETS_FOR_CLI" -ne 0 ] && [ $(wc -l < repos_for_cli.txt) -eq "$MAX_DATASETS_FOR_CLI" ]; then
+            echo "Reached limit of $MAX_DATASETS_FOR_CLI datasets in repos_for_cli.txt."
             break
         fi
         # When running the CLI on all repos from scratch, we don't compare the SHAs, 
