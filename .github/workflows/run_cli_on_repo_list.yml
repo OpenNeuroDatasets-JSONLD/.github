@@ -43,7 +43,7 @@ jobs:
       - name: Checkout openneuro-annotations
         uses: actions/checkout@v4
         with:
-          repository: Neurobagel/openneuro-annotations
+          repository: neurobagel/openneuro-annotations
           ref: 'main'
           path: openneuro-annotations
       
