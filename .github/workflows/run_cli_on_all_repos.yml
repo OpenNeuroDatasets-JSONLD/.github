@@ -103,14 +103,14 @@ jobs:
             git add code/sha.txt code/failed_cli_datasets.txt
             if ! git diff --cached --quiet; then
               git commit -m "$commit_message"
-              git push origin ${{ github.ref_name }}
+              git push origin main
             fi
 
     call-run-cli-on-repo-list:
       needs: get-repos
       # Only run this job if the list of repos is not empty
       if: ${{ needs.get-repos.outputs.dataset_list != '' }}
-      uses: OpenNeuroDatasets-JSONLD/.github/.github/workflows/run_cli_on_repo_list.yml@${{ github.ref_name }}
+      uses: OpenNeuroDatasets-JSONLD/.github/.github/workflows/run_cli_on_repo_list.yml@main
       with:
         dataset_list: ${{ needs.get-repos.outputs.dataset_list }}
         clear_old_jsonlds: ${{ github.event.inputs.clear_old_jsonlds == 'true' }}
