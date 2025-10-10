@@ -39,6 +39,14 @@ jobs:
         with:
           ref: 'main'
           token: ${{ steps.generate-token.outputs.token }}
+
+      - name: Checkout openneuro-annotations
+        uses: actions/checkout@v4
+        # NOTE: A token is needed if you want to git push to a repo
+        with:
+          repository: Neurobagel/openneuro-annotations
+          ref: 'main'
+          path: openneuro-annotations
       
       # git-annex is required for datalad
       # Also setting author info here for Git to suppress datalad warnings
@@ -150,7 +158,7 @@ jobs:
           # See https://github.com/actions/create-github-app-token?tab=readme-ov-file#create-a-token-for-all-repositories-in-another-owners-installation
           owner: neurobagel
 
-      - name: Checkout
+      - name: Checkout openneuro-annotations
         uses: actions/checkout@v4
         with:
           repository: 'neurobagel/openneuro-annotations'
