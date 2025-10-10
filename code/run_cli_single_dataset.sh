@@ -64,8 +64,6 @@ if ! bagel bids \
     exit 1
 fi
 
-# Check if a file called ${ds_id}.tsv exists in ../openneuro-annotations/ and if
-# yes, then run this part as well
 if [ -f ${np_status} ]; then
     bagel derivatives \
     --jsonld-path ${workdir}/pheno_bids.jsonld \
