@@ -42,7 +42,6 @@ jobs:
 
       - name: Checkout openneuro-annotations
         uses: actions/checkout@v4
-        # NOTE: A token is needed if you want to git push to a repo
         with:
           repository: Neurobagel/openneuro-annotations
           ref: 'main'
