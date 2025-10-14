@@ -65,11 +65,14 @@ if ! bagel bids \
 fi
 
 if [ -f ${np_status} ]; then
-    bagel derivatives \
+    if bagel derivatives \
     --jsonld-path ${workdir}/pheno_bids.jsonld \
     --tabular ${np_status} \
-    --output  ${workdir}/pheno_derivative.jsonld
-    cp ${workdir}/pheno_derivative.jsonld ${derivative_jsonld_path}
-else
-    cp ${workdir}/pheno_bids.jsonld ${bids_jsonld_path}
+    --output  ${workdir}/pheno_derivative.jsonld; then
+        cp ${workdir}/pheno_derivative.jsonld ${derivative_jsonld_path}
+        # And now we are done
+        exit 0
+    fi
 fi
+
+cp ${workdir}/pheno_bids.jsonld ${bids_jsonld_path}
