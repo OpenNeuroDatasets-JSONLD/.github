@@ -74,5 +74,7 @@ if [ -f ${np_status} ]; then
         cp ${workdir}/pheno_derivative.jsonld ${derivative_jsonld_path}
         # And now we are done
         exit 0
+    fi
+fi
 
 cp ${workdir}/pheno_bids.jsonld ${bids_jsonld_path}
