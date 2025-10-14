@@ -49,8 +49,9 @@ for dataset in $(cat $dataset_list_path); do
         # Look in the error message for substring from 
         # "...must contain at least one column with Neurobagel annotations"
         # to indicate that data dictionary is missing Neurobagel annotations
-        # (we use a substring to avoid issues with logs being wrapped)
-        if echo "$cli_output" | grep -q "one column with Neurobagel annotations"; then
+        # We remove newline chars first to avoid missing matches when logs are wrapped
+        flat_cli_output="${cli_output//$'\n'/}"
+        if [[ "$flat_cli_output" == *"one column with Neurobagel annotations"* ]]; then
             echo "${repo}: participants.json is missing Neurobagel annotations. Saving repo ID to temp_datasets_missing_annotations.txt"
             echo "${repo}" >> temp_datasets_missing_annotations.txt
             update_sha_file "$repo" "$sha"
