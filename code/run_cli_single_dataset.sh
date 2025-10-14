@@ -68,10 +68,8 @@ if [ -f ${np_status} ]; then
     bagel derivatives \
     --jsonld-path ${workdir}/pheno_bids.jsonld \
     --tabular ${np_status} \
-    --output  ${workdir}/pheno_derivative.jsonld \
+    --output  ${workdir}/pheno_derivative.jsonld
     cp ${workdir}/pheno_derivative.jsonld ${derivative_jsonld_path}
-elif
+else
     cp ${workdir}/pheno_bids.jsonld ${bids_jsonld_path}
 fi
-
-
