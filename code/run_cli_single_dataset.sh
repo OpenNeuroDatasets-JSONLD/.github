@@ -18,7 +18,7 @@ mkdir -p ${failed_bids_tsvs}
 # NOTE: realpath is used to get an absolute path of the directory
 workdir=$(realpath ${ldin}/${ds_id})
 bids_jsonld_path="${ldout}/${ds_id}_bids.jsonld"
-np_status="${workdir}/../../openneuro-annotations/processing_status_files/${ds_id}.tsv"
+np_status="${workdir}/../../../openneuro-annotations/processing_status_files/${ds_id}.tsv"
 derivative_jsonld_path="${ldout}/${ds_id}_derivative.jsonld"
 
 datalad clone ${ds_portal} ${workdir}
@@ -69,7 +69,6 @@ if [ -f ${np_status} ]; then
     --jsonld-path ${workdir}/pheno_bids.jsonld \
     --tabular ${np_status} \
     --output  ${workdir}/pheno_derivative.jsonld \
-    --overwrite
     cp ${workdir}/pheno_derivative.jsonld ${derivative_jsonld_path}
 elif
     cp ${workdir}/pheno_bids.jsonld ${bids_jsonld_path}
