@@ -6,10 +6,10 @@ set -euo pipefail
 ds_id=$1
 
 # Get the data
-ds_portal="https://github.com/OpenNeuroDatasets-JSONLD/${ds_id}.git"
-ds_website="https://openneuro.org/datasets/${ds_id}"
+ds_repository="https://github.com/OpenNeuroDatasets-JSONLD/${ds_id}.git"
+ds_homepage="https://openneuro.org/datasets/${ds_id}"
 
-script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+script_dir="$(dirname "$0")"
 
 ldin=data
 ldout=${ldin}/jsonld
@@ -24,7 +24,7 @@ bids_jsonld_path="${ldout}/${ds_id}_bids.jsonld"
 np_status="${workdir}/../../../openneuro-annotations/processing_status_files/${ds_id}.tsv"
 derivative_jsonld_path="${ldout}/${ds_id}_derivative.jsonld"
 
-datalad clone ${ds_portal} ${workdir}
+datalad clone ${ds_repository} ${workdir}
 datalad get -d $workdir "${workdir}/participants.tsv"
 datalad get -d $workdir "${workdir}/participants.json"
 datalad get -d $workdir "${workdir}/dataset_description.json"
@@ -45,7 +45,7 @@ if [ -z "$ds_name" ] || [ "$ds_name" == "null" ] || [[ "$ds_name" =~ ^[[:space:]
     ds_name=$ds_id
 fi
 
-python ${script_dir}/update_dataset_description.py ${workdir}/dataset_description.json ${ds_id} ${ds_website} ${ds_portal}
+python ${script_dir}/update_dataset_description.py ${workdir}/dataset_description.json ${ds_id} ${ds_homepage} ${ds_repository}
 
 # Run the Neurobagel CLI
 bagel pheno \
