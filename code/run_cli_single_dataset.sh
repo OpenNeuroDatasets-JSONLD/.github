@@ -7,6 +7,9 @@ ds_id=$1
 
 # Get the data
 ds_portal="https://github.com/OpenNeuroDatasets-JSONLD/${ds_id}.git"
+ds_website="https://openneuro.org/datasets/${ds_id}"
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 ldin=data
 ldout=${ldin}/jsonld
@@ -42,13 +45,14 @@ if [ -z "$ds_name" ] || [ "$ds_name" == "null" ] || [[ "$ds_name" =~ ^[[:space:]
     ds_name=$ds_id
 fi
 
+python ${script_dir}/update_dataset_description.py ${workdir}/dataset_description.json ${ds_id} ${ds_website} ${ds_portal}
+
 # Run the Neurobagel CLI
 bagel pheno \
     --pheno ${workdir}/participants.tsv \
     --dictionary ${workdir}/participants.json \
     --output ${workdir}/pheno.jsonld \
-    --name "$ds_name" \
-    --portal $ds_portal
+    --dataset_description ${workdir}/nb_dataset_description.json \
 
 bagel bids2tsv --bids-dir ${workdir} --output ${workdir}/${ds_id}_bids.tsv
 
