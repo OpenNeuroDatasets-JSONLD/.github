@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-def main(ds_description_path: Path, ds_id: int, ds_website: str, ds_repos: str):
+def main(ds_description_path: Path, ds_id: str, ds_website: str, ds_repos: str):
     """
     Update an existing dataset_description.json file with relevant metadata for the CLI.
     """
