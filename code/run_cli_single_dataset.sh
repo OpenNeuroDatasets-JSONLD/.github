@@ -29,22 +29,7 @@ datalad get -d $workdir "${workdir}/participants.tsv"
 datalad get -d $workdir "${workdir}/participants.json"
 datalad get -d $workdir "${workdir}/dataset_description.json"
 
-# Get the dataset label
-ds_name=$(cat ${workdir}/dataset_description.json 2>/dev/null | jq .Name)
-
-# Strip the leading and trailing quotes (") from the ds_name, which are preserved by default when using jq
-ds_name=${ds_name#\"}
-ds_name=${ds_name%\"}
-
-# Catches the cases where:
-# - the dataset_description.json does not exist
-# - the "Name" field does not exist
-# - the "Name" field is an empty string "" or contains only whitespace characters (spaces, tabs, newlines, such as " ")
-# and sets the dataset name to the dataset ID in those cases
-if [ -z "$ds_name" ] || [ "$ds_name" == "null" ] || [[ "$ds_name" =~ ^[[:space:]]*$ ]]; then
-    ds_name=$ds_id
-fi
-
+# Update the description
 python ${script_dir}/update_dataset_description.py ${workdir}/dataset_description.json ${ds_id} ${ds_homepage} ${ds_repository}
 
 # Run the Neurobagel CLI
