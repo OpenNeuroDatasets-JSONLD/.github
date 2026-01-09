@@ -3,6 +3,9 @@
 
 set -euo pipefail
 
+# Set datalad logging to ERROR only
+export DATALAD_LOG_LEVEL=error
+
 ds_id=$1
 
 # Get the data

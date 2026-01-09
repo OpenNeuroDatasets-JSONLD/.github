@@ -11,7 +11,7 @@ from pathlib import Path
 
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.ERROR)
 
 
 def main(ds_description_path: Path, ds_id: str, ds_website: str, ds_repos: str):
