@@ -37,7 +37,7 @@ bagel pheno \
     --pheno ${workdir}/participants.tsv \
     --dictionary ${workdir}/participants.json \
     --output ${workdir}/pheno.jsonld \
-    --dataset_description ${workdir}/nb_dataset_description.json \
+    --dataset-description ${workdir}/nb_dataset_description.json \
 
 bagel bids2tsv --bids-dir ${workdir} --output ${workdir}/${ds_id}_bids.tsv
 
