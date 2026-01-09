@@ -38,15 +38,17 @@ bagel pheno \
     --dictionary ${workdir}/participants.json \
     --output ${workdir}/pheno.jsonld \
     --dataset-description ${workdir}/nb_dataset_description.json \
+    --verbosity 0
 
-bagel bids2tsv --bids-dir ${workdir} --output ${workdir}/${ds_id}_bids.tsv
+bagel bids2tsv --bids-dir ${workdir} --output ${workdir}/${ds_id}_bids.tsv --verbosity 0
 
 # NOTE: dataget expects OpenNeuro imaging session paths to be in the format /dsXXXX/sub-XXX/ses-XXX
 if ! bagel bids \
     --jsonld-path ${workdir}/pheno.jsonld \
     --bids-table ${workdir}/${ds_id}_bids.tsv \
     --dataset-source-dir "/${ds_id}" \
-    --output ${workdir}/pheno_bids.jsonld; then
+    --output ${workdir}/pheno_bids.jsonld \
+    --verbosity 0; then
 
     cp ${workdir}/${ds_id}_bids.tsv ${failed_bids_tsvs}
     echo "Moved BIDS metadata table for failed dataset to ${failed_bids_tsvs}."
@@ -57,7 +59,8 @@ if [ -f ${np_status} ]; then
     if bagel derivatives \
     --jsonld-path ${workdir}/pheno_bids.jsonld \
     --tabular ${np_status} \
-    --output  ${workdir}/pheno_derivative.jsonld; then
+    --output  ${workdir}/pheno_derivative.jsonld \
+    --verbosity 0; then
         cp ${workdir}/pheno_derivative.jsonld ${derivative_jsonld_path}
         # And now we are done
         exit 0
