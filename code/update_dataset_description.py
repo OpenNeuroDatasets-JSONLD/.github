@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.ERROR)
 
 
-def main(ds_description_path: Path, ds_id: str, ds_website: str, ds_repos: str):
+def main(ds_description_path: Path, ds_id: str, ds_website: str, ds_repo: str):
     """
     Update an existing dataset_description.json file with relevant metadata for the CLI.
     """
@@ -33,10 +33,11 @@ def main(ds_description_path: Path, ds_id: str, ds_website: str, ds_repos: str):
     expanded_ds_description = {
         **ds_description,
         "Name": ds_name,
-        "RepositoryURL": ds_repos,
+        "AccessType": "public",
+        "RepositoryURL": ds_repo,
     }
 
-    if not ds_website in ds_description.get("ReferencesAndLinks", []):
+    if ds_website not in ds_description.get("ReferencesAndLinks", []):
         expanded_ds_description = {
             **expanded_ds_description,
             "ReferencesAndLinks": [
