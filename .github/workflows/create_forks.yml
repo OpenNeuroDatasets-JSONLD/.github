@@ -7,6 +7,7 @@ name: Fork Repositories
 on:
   schedule:
     - cron: '21 12,0 * * *'
+  workflow_dispatch: 
 
 jobs:
   joblist:
