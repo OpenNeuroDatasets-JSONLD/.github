@@ -7,7 +7,8 @@
 # If a file needed for the CLI is not found, the script only updates the SHA in sha.txt without doing anything else.
 
 FLAG="$1"
-MAX_DATASETS_FOR_CLI="${2:-0}"
+# TODO: REMOVE - temporarily set max datasets to 20 if not provided as an argument
+MAX_DATASETS_FOR_CLI="${2:-20}"
 
 OWNER="OpenNeuroDatasets-JSONLD"
 
@@ -83,6 +84,11 @@ for repo in $reposON_LD; do
             fi
         fi
     else
+        # TODO: Remove if block
+        if [ $(wc -l < repos_for_cli.txt) -eq "$MAX_DATASETS_FOR_CLI" ]; then
+            echo "Reached limit of $MAX_DATASETS_FOR_CLI datasets in repos_for_cli.txt."
+            break
+        fi
         # Get the line with the old SHA from sha.txt for the repo
         line=$(grep "$repo" sha.txt)
 
