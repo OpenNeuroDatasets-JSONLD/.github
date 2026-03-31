@@ -15,8 +15,8 @@ update_sha_file() {
     old_repo_sha=$(grep "$repo" sha.txt)
 
     # The following section is similar to code in sha_scraper.sh, but instead updates SHAs in sha.txt for
-    # each repo that has *successfully run the CLI*, to ensure we now record their most up to date SHA
-    # (i.e., to indicate when the last successful CLI run happened).
+    # each repo that has *successfully run the CLI* OR that we have detected *is missing annotations*.
+    # This helps ensure we now record their most up to date SHA (i.e., to indicate when the last successful CLI run happened).
     # To achieve this:
     # - if the repo DOES already have an entry in sha.txt, we replace (update) the existing SHA with the current SHA
     # - if the repo DOES NOT already have an entry in sha.txt (meaning this is a newly added repo), add the repo and its SHA
@@ -48,7 +48,8 @@ for dataset in $(cat $dataset_list_path); do
     else
         # Look in the error message for substring from 
         # "...must contain at least one column with Neurobagel annotations"
-        # to indicate that data dictionary is missing Neurobagel annotations
+        # to indicate that data dictionary is missing Neurobagel annotations.
+        # We update the entry in sha.txt so we only reattempt the CLI once the repo has changed.
         # We trim newline chars first to avoid missing matches when logs are wrapped
         if echo "$cli_output" | tr -s '[:space:]' ' ' | grep -q "one column with Neurobagel annotations"; then
             echo "${repo}: participants.json is missing Neurobagel annotations. Saving repo ID to temp_datasets_missing_annotations.txt"
