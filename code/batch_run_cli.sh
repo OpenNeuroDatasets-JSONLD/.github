@@ -37,6 +37,7 @@ for dataset in $(cat $dataset_list_path); do
     echo "($count/$total_datasets) Repo info: $repo,$sha"
 
     echo "${repo}: Running the CLI"
+    # NOTE: Logs from the CLI should contain only errors due to the set verbosity
     cli_output=$(./run_cli_single_dataset.sh "$repo" 2>&1)
     cli_exit_code=$?
     echo "$cli_output"
@@ -46,20 +47,31 @@ for dataset in $(cat $dataset_list_path); do
         echo "${repo}: CLI ran successfully!"
         update_sha_file "$repo" "$sha"
     else
+        # Trim newline chars first to avoid missing substring matches when logs are wrapped
+        normalized_logs=$(echo "$cli_output" | tr -s '[:space:]' ' ')
         # Look in the error message for substring from 
         # "...must contain at least one column with Neurobagel annotations"
         # to indicate that data dictionary is missing Neurobagel annotations.
         # We update the entry in sha.txt so we only reattempt the CLI once the repo has changed.
-        # We trim newline chars first to avoid missing matches when logs are wrapped
-        if echo "$cli_output" | tr -s '[:space:]' ' ' | grep -q "one column with Neurobagel annotations"; then
+        if echo "$normalized_logs" | grep -q "one column with Neurobagel annotations"; then
             echo "${repo}: participants.json is missing Neurobagel annotations. Saving repo ID to temp_datasets_missing_annotations.txt"
             echo "${repo}" >> temp_datasets_missing_annotations.txt
             update_sha_file "$repo" "$sha"
         fi
+        # Classify the failure type from the error messages for easier debugging
+        if echo "$normalized_logs" | grep -iqE "phenotypic TSV|phenotypic table|data dictionary|dataset description"; then
+            echo "${repo}: CLI failed during phenotypic processing"
+        elif echo "$normalized_logs" | grep -iqE "BIDS table|BIDS metadata table"; then
+            echo "${repo}: CLI failed during BIDS processing"
+        elif echo "$normalized_logs" | grep -iqE "processing status table|processing status TSV"; then
+            echo "${repo}: CLI failed during derivatives processing"
+        else
+            echo "${repo}: CLI failed for another reason"
+        fi
+
         # If the CLI failed for the repo and the dataset was annotated, 
         # we do not update or add an entry to sha.txt so that the next time this script is called, 
         # the CLI will be attempted again for that repo.
-        echo "${repo}: CLI failed"
         echo "${repo}" >> failed_cli_datasets.txt
     fi
 
