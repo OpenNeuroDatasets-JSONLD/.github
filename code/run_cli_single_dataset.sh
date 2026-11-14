@@ -50,8 +50,8 @@ result=$(bagel create \
     --bids-table ${workdir}/${ds_id}_bids.tsv \
     --imaging-source-dir "/${ds_id}" \
     --output ${workdir}/pheno_bids.jsonld \
-    --strict \
-    --verbosity 0 2>&1)
+    --verbosity 0 \
+    --strict 2>&1)
 
 exit_code=$?
 set -e
@@ -75,7 +75,8 @@ if [ -f ${np_status} ]; then
     --imaging-source-dir "/${ds_id}" \
     --processing-status ${np_status} \
     --output  ${workdir}/pheno_derivative.jsonld \
-    --verbosity 0; then
+    --verbosity 0 \
+    --strict; then
         cp ${workdir}/pheno_derivative.jsonld ${derivative_jsonld_path}
         # And now we are done
         exit 0
