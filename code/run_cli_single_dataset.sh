@@ -35,35 +35,48 @@ datalad get -d $workdir "${workdir}/dataset_description.json"
 # Update the description
 python ${script_dir}/update_dataset_description.py ${workdir}/dataset_description.json ${ds_id} ${ds_homepage} ${ds_repository}
 
-# Run the Neurobagel CLI
-bagel pheno \
-    --pheno ${workdir}/participants.tsv \
-    --dictionary ${workdir}/participants.json \
-    --output ${workdir}/pheno.jsonld \
-    --dataset-description ${workdir}/nb_dataset_description.json \
-    --verbosity 0
-
+# Generate the BIDS metadata table
 bagel bids2tsv --bids-dir ${workdir} --output ${workdir}/${ds_id}_bids.tsv --verbosity 0
 
-# NOTE: dataget expects OpenNeuro imaging session paths to be in the format /dsXXXX/sub-XXX/ses-XXX
-if ! bagel bids \
-    --jsonld-path ${workdir}/pheno.jsonld \
-    --bids-table ${workdir}/${ds_id}_bids.tsv \
-    --dataset-source-dir "/${ds_id}" \
-    --output ${workdir}/pheno_bids.jsonld \
-    --verbosity 0; then
+# Run the Neurobagel CLI
 
-    cp ${workdir}/${ds_id}_bids.tsv ${failed_bids_tsvs}
-    echo "Moved BIDS metadata table for failed dataset to ${failed_bids_tsvs}."
+# Disable exit on error temporarily to allow capturing error logs from the CLI
+set +e
+# NOTE: dataget expects OpenNeuro imaging session paths to be in the format /dsXXXX/sub-XXX/ses-XXX
+result=$(bagel create \
+    --pheno ${workdir}/participants.tsv \
+    --dictionary ${workdir}/participants.json \
+    --dataset-description ${workdir}/nb_dataset_description.json \
+    --bids-table ${workdir}/${ds_id}_bids.tsv \
+    --imaging-source-dir "/${ds_id}" \
+    --output ${workdir}/pheno_bids.jsonld \
+    --verbosity 0 \
+    --strict 2>&1)
+
+exit_code=$?
+set -e
+
+# We exclude any datasets where BIDS processing failed,
+# so all OpenNeuro datasets in the graph have at minimum phenotypic and BIDS information
+if [ $exit_code -ne 0 ]; then
+    if echo "$result" | grep -iqE "BIDS table|BIDS metadata table"; then
+        cp ${workdir}/${ds_id}_bids.tsv ${failed_bids_tsvs}
+        echo "Copied BIDS metadata table for failed dataset to ${failed_bids_tsvs}."
+    fi
     exit 1
 fi
 
 if [ -f ${np_status} ]; then
-    if bagel derivatives \
-    --jsonld-path ${workdir}/pheno_bids.jsonld \
-    --tabular ${np_status} \
+    if bagel create \
+    --pheno ${workdir}/participants.tsv \
+    --dictionary ${workdir}/participants.json \
+    --dataset-description ${workdir}/nb_dataset_description.json \
+    --bids-table ${workdir}/${ds_id}_bids.tsv \
+    --imaging-source-dir "/${ds_id}" \
+    --processing-status ${np_status} \
     --output  ${workdir}/pheno_derivative.jsonld \
-    --verbosity 0; then
+    --verbosity 0 \
+    --strict; then
         cp ${workdir}/pheno_derivative.jsonld ${derivative_jsonld_path}
         # And now we are done
         exit 0
